@@ -10,7 +10,18 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    
+    env:
+      MYSQL_DATABASE: ${{ env.MYSQL_DATABASE }}
+      MYSQL_USER: ${{ env.MYSQL_USER }}
+      MYSQL_PASSWORD: ${{ env.MYSQL_PASSWORD }}
+      MYSQL_ROOT_PASSWORD: ${{ env.MYSQL_ROOT_PASSWORD }}
+      SERVER.PORT: 8080
+      SPRING.DATASOURCE.URL: jdbc:mysql://localhost:3306/${{ MYSQL_DATABASE }}
+      SPRING.DATASOURCE.USERNAME: ${{ MYSQL_USER }}
+      SPRING.DATASOURCE.PASSWORD: ${{ MYSQL_PASSWORD }}
+      JWT_KEY: ${{ JWT_KEY }}
+      CORS.ORIGINFRONT: ${{ CORS_FRONT }}
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v3.4.0
