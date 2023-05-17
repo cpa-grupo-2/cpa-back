@@ -3,7 +3,12 @@ name: CI/CD pipeline
 on:
   push:
     branches:
-      - dev
+      - main
+  pull_request_review:
+    types:
+      - submitted
+    branches:
+      - main
       
 jobs:
   tests:
@@ -13,12 +18,6 @@ jobs:
       MYSQL_USER: ${{ vars.MYSQL_USER }}
       MYSQL_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
       MYSQL_ROOT_PASSWORD: ${{ vars.MYSQL_ROOT_PASSWORD }}
-      SERVER.PORT: 8080
-      SPRING.DATASOURCE.URL: jdbc:mysql://localhost:3306/${{ vars.MYSQL_DATABASE }}
-      SPRING.DATASOURCE.USERNAME: ${{ vars.MYSQL_USER }}
-      SPRING.DATASOURCE.PASSWORD: ${{ vars.MYSQL_PASSWORD }}
-      JWT_KEY: ${{ vars.JWT_KEY }}
-      CORS.ORIGINFRONT: ${{ vars.CORS_FRONT }}
       
     steps:
       - name: Checkout code
@@ -36,14 +35,11 @@ jobs:
       - name: Build
         run: mvn --batch-mode -DskipTests package
 
-      - name: Test
-        run: mvn --batch-mode -Dmaven.test.failure.ignore=false test
-        
+      - name: test
+        run: mvn test -DDB_HOST=jdbc:mysql://localhost:3306/${{ vars.MYSQL_DATABASE }} -DDB_USER=${{ vars.MYSQL_USER }} -DDB_PASS=${{ vars.MYSQL_PASSWORD }} -DJWT_KEY=${{ vars.JWT_KEY }} -DCORS_FRONT=${{ vars.CORS_FRONT }}
+
       - name: Down Mysql for tests
         run: docker-compose down mysql_db
-      
-      - name: Check pattern
-        run: mvn checkstyle:checkstyle
         
   build-and-up-dockerHub:
     needs: tests
@@ -65,5 +61,4 @@ jobs:
         context: .
         push: true
         tags: |
-          cpaApplication/cpa-back:1.0.0
-          cpaApplication/cpa-back:latest
+          viniciuspicheidt/cpa-back:latest
