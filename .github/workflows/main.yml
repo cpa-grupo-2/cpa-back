@@ -28,7 +28,7 @@ jobs:
         run: mvn --batch-mode -DskipTests package
 
       - name: Test
-        run: mvn --batch-mode -Dspring.profiles.active=docker -Dmaven.test.failure.ignore=false test
+        run: mvn --batch-mode -Dmaven.test.failure.ignore=false test
         
       - name: Down Mysql for tests
         run: docker-compose down mysql_db
