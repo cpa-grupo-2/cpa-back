@@ -1,0 +1,71 @@
+name: CI/CD pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      MYSQL_DATABASE: ${{ vars.MYSQL_DATABASE }}
+      MYSQL_USER: ${{ vars.MYSQL_USER }}
+      MYSQL_PASSWORD: ${{ vars.MYSQL_PASSWORD }}
+      MYSQL_ROOT_PASSWORD: ${{ vars.MYSQL_ROOT_PASSWORD }}
+      SERVER.PORT: 8080
+      SPRING.DATASOURCE.URL: jdbc:mysql://localhost:3306/${{ vars.MYSQL_DATABASE }}
+      SPRING.DATASOURCE.USERNAME: ${{ vars.MYSQL_USER }}
+      SPRING.DATASOURCE.PASSWORD: ${{ vars.MYSQL_PASSWORD }}
+      JWT_KEY: ${{ vars.JWT_KEY }}
+      CORS.ORIGINFRONT: ${{ vars.CORS_FRONT }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3.4.0
+      
+      - name: Set up JAVA
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+          
+      - name: Up MySQL container
+        run: docker-compose up -d db-cpa
+      
+      - name: Build
+        run: mvn --batch-mode -DskipTests package
+
+      - name: Test
+        run: mvn --batch-mode -Dmaven.test.failure.ignore=false test
+        
+      - name: Down Mysql for tests
+        run: docker-compose down mysql_db
+      
+      - name: Check pattern
+        run: mvn checkstyle:checkstyle
+        
+  build-and-up-dockerHub:
+    needs: tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3.4.0
+      
+    - name: DockerHub login
+      uses: docker/login-action@v2.1.0
+      with:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+        
+    - name: Build Docker image
+      uses: docker/build-push-action@v4.0.0
+      with:
+        context: .
+        push: true
+        tags: |
+          cpaApplication/cpa-back:1.0.0
+          cpaApplication/cpa-back:latest
