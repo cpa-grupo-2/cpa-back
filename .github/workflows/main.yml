@@ -3,7 +3,13 @@ name: CI/CD pipeline
 on:
   push:
     branches:
-      - dev
+      - main
+  pull_request_review:
+    types:
+      - submitted
+    branches:
+      - main
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -55,5 +61,4 @@ jobs:
         context: .
         push: true
         tags: |
-          viniciuspicheidt/cpa-back:1.0.0
           viniciuspicheidt/cpa-back:latest
