@@ -50,7 +50,6 @@ services:
     command: mvn spring-boot:run
     depends_on:
       db-cpa:
-        restart: true
         condition: service_healthy
     networks:
       - integration-network-cpa
