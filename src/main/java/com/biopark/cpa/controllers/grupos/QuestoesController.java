@@ -1,4 +1,4 @@
-/* 
+
 package com.biopark.cpa.controllers.grupos;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +24,8 @@ public class QuestoesController {
     }
     
     @PostMapping
-    public ResponseEntity<Questoes> criarQuestao(@RequestBody Questoes questoes) {
+    public ResponseEntity<Questoes> criarQuestoes(@RequestBody Questoes questoes) {
         Questoes questaoCriada = questoesService.criarQuestoes(questoes);
         return new ResponseEntity<>(questaoCriada, HttpStatus.CREATED);
     }
 }
-
-*/
