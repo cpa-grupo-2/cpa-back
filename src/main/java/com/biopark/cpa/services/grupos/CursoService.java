@@ -78,6 +78,9 @@ public class CursoService {
 
         int linha = 0;
         for (Curso curso: cursos) {
+            curso.setCodCurso(curso.getCodCurso().toLowerCase());
+            curso.setNomeCurso(curso.getNomeCurso().toLowerCase());
+
             linha ++;
             if (!uniqueCod.containsKey(curso.getCodCurso())) {
                 uniqueCod.put(curso.getCodCurso(), linha);
@@ -157,13 +160,13 @@ public class CursoService {
     // Editar Curso por ID
     public GenericDTO editarCurso(Curso cursoRequest) {
         try {
-            Curso curso = buscarPorCodigo(cursoRequest.getCodigoCurso());
+            Curso curso = buscarPorCodigo(cursoRequest.getCodCurso());
             // esse set vai ser para quando tiver a coluna Nome Curso no banco.
             // curso.setNomeCurso(cursoRequest.getNomeCurso());
 
             cursoRepository.save(curso);
             return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Curso " + cursoRequest.getCodigoCurso() + " editado com sucesso")
+                    .mensagem("Curso " + cursoRequest.getCodCurso() + " editado com sucesso")
                     .build();
         } catch (Exception e) {
             return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
@@ -181,7 +184,7 @@ public class CursoService {
             cursoRepository.delete(curso);
             return GenericDTO.builder().status(HttpStatus.OK)
                     // Está sendo passando o get pelo codigo curso, pois, não tem a coluna nome ainda no banco.
-                    .mensagem("Curso " + curso.getCodigoCurso() + " excluído com sucesso")
+                    .mensagem("Curso " + curso.getCodCurso() + " excluído com sucesso")
                     .build();
         } catch (EmptyResultDataAccessException e) {
             return GenericDTO.builder().status(HttpStatus.NOT_FOUND)

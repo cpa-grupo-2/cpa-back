@@ -12,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -57,7 +58,12 @@ public class Turma {
     @JoinColumn(name = "curso_id")
     private Curso curso;
 
-    @ManyToMany(mappedBy = "turmas")
+    @ManyToMany
+    @JoinTable(
+        name = "desafio_turma",
+        joinColumns = @JoinColumn(name = "turma_id"),
+        inverseJoinColumns = @JoinColumn(name = "desafio_id")
+    )
     private List<Desafio> desafios;
 
     @Transient

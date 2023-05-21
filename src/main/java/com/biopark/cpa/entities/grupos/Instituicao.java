@@ -47,7 +47,7 @@ public class Instituicao {
 
     @Column(nullable = false)
     @NotBlank(message = "O campo de CNPJ não pode ser nulo")
-    @Pattern(regexp = "(\\d{2}\\.[0-9]{3}\\.\\d{3}\\/\\d{4}-\\d{2})", message = "O valor informado não esta no modelo de cnpj")
+    @Pattern(regexp = "(\\d{2}\\.[0-9]{3}\\.\\d{3}/\\d{4}-\\d{2})", message = "O valor informado não esta no modelo de cnpj")
     @CsvBindByName(column = "cnpj")
     private String cnpj;
 

@@ -11,8 +11,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
@@ -39,11 +37,6 @@ public class Desafio {
     @ColumnTransformer(write = "LOWER(?)")
     private String nomeDesafio;
 
-    //@Column(name="Desativados")
-    //private Boolean Desativados;
-    @ManyToMany
-    @JoinTable(name = "desafio_turma",
-               joinColumns = @JoinColumn(name = "desafio_id"),
-               inverseJoinColumns = @JoinColumn(name = "turma_id"))
+    @ManyToMany(mappedBy = "desafios")
     private List<Turma> turmas;
 }

@@ -66,6 +66,7 @@ public class InstituicaoService {
 
         int linha = 0;
         for (Instituicao instituicao: instituicoes) {
+            instituicao.setCodigoInstituicao(instituicao.getCodigoInstituicao().toLowerCase());
             linha ++;
             if (!uniqueCod.containsKey(instituicao.getCodigoInstituicao())) {
                 uniqueCod.put(instituicao.getCodigoInstituicao(), linha);
@@ -79,7 +80,7 @@ public class InstituicaoService {
                 continue;
             }
 
-            if (instituicaoRepository.findByCodigoInstituicao(instituicao.getCodigoInstituicao().toLowerCase()).isPresent()) {
+            if (instituicaoRepository.findByCodigoInstituicao(instituicao.getCodigoInstituicao()).isPresent()) {
                 erroValidations
                         .add(ErroValidation.builder().linha(linha).mensagem("Instituição já cadastrada").build());
             }
