@@ -30,13 +30,15 @@ public class Questoes {
     @NotBlank(message = "O campo codigo_questao não pode ser nulo")
     private String codigoQuestao;
 
-
     @Column(nullable = false)
     @NotBlank(message = "O campo titulo não pode ser nulo")
     private String titulo;
 
     @Column(nullable = false)
-    @NotBlank(message = "O campo descricao não pode ser nulo")
+    @NotBlank(message = "O campo descriçãoo não pode ser nulo")
     private String descricao;
 
+    @Column(nullable = false)
+    @NotBlank(message = "O campo resposta não pode ser nulo")
+    private String resposta;
 }

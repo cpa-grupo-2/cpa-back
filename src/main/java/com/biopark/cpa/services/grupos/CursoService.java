@@ -158,9 +158,7 @@ public class CursoService {
     public GenericDTO editarCurso(Curso cursoRequest) {
         try {
             Curso curso = buscarPorCodigo(cursoRequest.getCodigoCurso());
-            // esse set vai ser para quando tiver a coluna Nome Curso no banco.
-            // curso.setNomeCurso(cursoRequest.getNomeCurso());
-
+            curso.setNomeCurso(cursoRequest.getNomeCurso());
             cursoRepository.save(curso);
             return GenericDTO.builder().status(HttpStatus.OK)
                     .mensagem("Curso " + cursoRequest.getCodigoCurso() + " editado com sucesso")

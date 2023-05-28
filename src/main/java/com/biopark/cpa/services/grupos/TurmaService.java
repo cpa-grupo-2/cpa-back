@@ -142,9 +142,8 @@ public class TurmaService {
     public GenericDTO editarTurma(Turma turmaRequest) {
         try {
             Turma turma = buscarPorCodigo(turmaRequest.getCodTurma());
-            // esse set vai ser para quando tiver a coluna Nome Curso no banco.
-            // turma.setNomeTurma(turmaRequest.getNomeTurma());
-
+            turma.setNomeTurma(turmaRequest.getNomeTurma());
+            turma.setSemestre(turmaRequest.getSemestre());
             turmaRepository.save(turma);
             return GenericDTO.builder().status(HttpStatus.OK)
                     .mensagem("Turma " + turmaRequest.getCodTurma() + " editado com sucesso")
