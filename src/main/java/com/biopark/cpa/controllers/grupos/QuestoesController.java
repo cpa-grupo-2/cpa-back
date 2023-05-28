@@ -1,5 +1,6 @@
 package com.biopark.cpa.controllers.grupos;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ import com.biopark.cpa.repository.grupo.QuestoesRepository;
 import com.biopark.cpa.services.grupos.QuestoesService;
 
 @RestController
-@RequestMapping("api/questoes")
+@RequestMapping("api/questao")
 public class QuestoesController {
 
     private QuestoesService questoesService;
@@ -36,12 +37,21 @@ public class QuestoesController {
     }
 
     @GetMapping
-    public ResponseEntity<Optional<Questoes>> buscarCodigoQuestao (
+    public ResponseEntity<Optional<Questoes>> buscarCodigoQuestao(
             @RequestParam(name = "codigoQuestao") String codigoQuestao) {
         var questao = questoesRepository.findByCodigoQuestao(codigoQuestao);
         if (questao == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(questao);
         }
         return ResponseEntity.status(HttpStatus.OK).body(questao);
+    }
+
+    @GetMapping("/questoes")
+    public ResponseEntity<List<Questoes>> buscarTodasQuestoes() {
+        var questoes = questoesRepository.findAll();
+        if (questoes.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(questoes);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(questoes);
     }
 }
