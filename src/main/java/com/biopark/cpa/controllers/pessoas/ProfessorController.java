@@ -21,13 +21,13 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/professor")
+@PreAuthorize("hasRole('CPA')")
 public class ProfessorController {
 
     private final CsvParserService csvParserService;
     private final ProfessorService professorService;
 
     @PostMapping
-    @PreAuthorize("hasRole('CPA')")
     public ResponseEntity<CadastroDTO> cadastrarProfessor(@RequestParam("file") MultipartFile file,
             @RequestParam("update") Boolean update) throws IOException {
         List<ProfessorModel> professores = csvParserService.parseCsv(file, ProfessorModel.class);

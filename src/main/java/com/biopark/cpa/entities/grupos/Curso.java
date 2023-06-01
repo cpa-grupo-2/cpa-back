@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.hibernate.annotations.ColumnTransformer;
 
+import com.biopark.cpa.entities.pessoas.Professor;
 import com.opencsv.bean.CsvBindByName;
 
 import jakarta.persistence.Column;
@@ -53,8 +54,17 @@ public class Curso {
     @OneToMany(mappedBy = "curso")
     private List<Turma> turmas;
 
+    @ManyToOne
+    @JoinColumn(name = "coordenador_id")
+    private Professor professor;
+
     @Transient
     @NotBlank(message = "O campo cod insituicao não deve ser nulo")
     @CsvBindByName(column = "codigo instituicao")
     private String codInstituicao;
+
+    @Transient
+    @NotBlank(message = "O campo cracha coordenador não deve ser nulo")
+    @CsvBindByName(column = "coordenador")
+    private String crachaCoordenador;
 }

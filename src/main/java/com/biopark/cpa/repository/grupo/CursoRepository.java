@@ -20,6 +20,6 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
 
     @Modifying
     @Transactional
-    @Query(value = "INSERT INTO curso (nome_curso, cod_curso, instituicao_id) VALUES (:#{#curso.nomeCurso.toLowerCase()}, :#{#curso.codCurso.toLowerCase()}, :#{#curso.instituicao.id}) ON DUPLICATE KEY UPDATE nome_curso = VALUES(nome_curso), instituicao_id = VALUES(instituicao_id)", nativeQuery = true)
+    @Query(value = "INSERT INTO curso (nome_curso, cod_curso, instituicao_id, coordenador_id) VALUES (:#{#curso.nomeCurso.toLowerCase()}, :#{#curso.codCurso.toLowerCase()}, :#{#curso.instituicao.id}, :#{#curso.professor.id}) ON DUPLICATE KEY UPDATE nome_curso = VALUES(nome_curso), instituicao_id = VALUES(instituicao_id), coordenador_id = VALUES(coordenador_id)", nativeQuery = true)
     void upsert(@Param("curso") Curso curso);
 }

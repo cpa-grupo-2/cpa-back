@@ -21,7 +21,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Transactional
     @Query(value = "INSERT INTO user (cpf, name, telefone, email, password, role, level)"
         +" VALUES (:#{#user.cpf}, :#{#user.name}, :#{#user.telefone}, :#{#user.email}, :#{#user.password},"
-        +" :#{#user.role}, :#{#user.level})"
+        +" :#{#user.role.name}, :#{#user.level.name})"
         +" ON DUPLICATE KEY UPDATE cpf = VALUES(cpf), name = VALUES(name), telefone = VALUES(telefone), email = VALUES(email),"
         +" password = VALUES(password), role = VALUES(role), level = VALUES(level)", nativeQuery = true)
     void upsert(@Param("user") User user);

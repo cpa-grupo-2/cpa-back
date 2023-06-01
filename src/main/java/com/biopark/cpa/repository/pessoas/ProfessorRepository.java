@@ -19,7 +19,7 @@ public interface ProfessorRepository extends JpaRepository<Professor, Long>{
     @Modifying
     @Transactional
     @Query(value = "INSERT INTO professor (cracha, is_coordenador, user_id)"+
-        " VALUES (:#{#professor.cracha}, :#{#professor.is_coordenador}, :#{#professor.user.id})"
-        +" ON DUPLICATE KEY UPDATE", nativeQuery = true)
+        " VALUES (:#{#professor.cracha}, :#{#professor.isCoordenador}, :#{#professor.user.id})"
+        +" ON DUPLICATE KEY UPDATE cracha = VALUES(cracha), is_coordenador = VALUES(is_coordenador), user_id = VALUES(user_id)", nativeQuery = true)
     void upsert(@Param("professor") Professor professor);
 }

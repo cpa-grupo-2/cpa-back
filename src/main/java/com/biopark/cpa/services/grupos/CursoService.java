@@ -14,8 +14,10 @@ import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.dto.cadastroCsv.ErroValidation;
 import com.biopark.cpa.dto.cadastroCsv.ValidationModel;
 import com.biopark.cpa.entities.grupos.Curso;
+import com.biopark.cpa.entities.pessoas.Professor;
 import com.biopark.cpa.repository.grupo.CursoRepository;
 import com.biopark.cpa.repository.grupo.InstituicaoRepository;
+import com.biopark.cpa.repository.pessoas.ProfessorRepository;
 import com.biopark.cpa.services.utils.CsvParserService;
 
 import jakarta.transaction.Transactional;
@@ -28,6 +30,7 @@ public class CursoService {
     private final CursoRepository cursoRepository;
     private final CsvParserService csvParserService;
     private final InstituicaoRepository instituicaoRepository;
+    private final ProfessorRepository professorRepository;
 
     @Transactional
     public CadastroDTO cadastrarCurso(List<Curso> cursos, boolean update){
@@ -38,7 +41,7 @@ public class CursoService {
             return CadastroDTO.builder().status(HttpStatus.BAD_REQUEST).erros(errors).warnings(warnings).build();
         }
 
-        ValidationModel<Curso> model = verificaInstituicao(cursos);
+        ValidationModel<Curso> model = verificaDependencias(cursos);
         List<ErroValidation> naoExiste = model.getErrors();
         cursos = model.getObjects();
 
@@ -118,13 +121,15 @@ public class CursoService {
                 .build();
     }   
 
-    private ValidationModel<Curso> verificaInstituicao(List<Curso> cursos){
+    private ValidationModel<Curso> verificaDependencias(List<Curso> cursos){
         List<ErroValidation> erros = new ArrayList<>();
 
         int linha = 0;
         for (Curso curso: cursos) {
             linha ++;
-            var instituicaoFind = instituicaoRepository.findByCodigoInstituicao(curso.getCodInstituicao().toLowerCase()); 
+            var instituicaoFind = instituicaoRepository.findByCodigoInstituicao(curso.getCodInstituicao().toLowerCase());
+            var coordenadorFind = professorRepository.findByCracha(curso.getCrachaCoordenador().toLowerCase());
+
             if (!instituicaoFind.isPresent()) {
                 erros.add(  
                     ErroValidation.builder()
@@ -134,6 +139,20 @@ public class CursoService {
                 );
             }else{
                 curso.setInstituicao(instituicaoFind.get());
+            }
+
+            if (!coordenadorFind.isPresent()) {
+                erros.add(  
+                    ErroValidation.builder()
+                        .linha(linha)
+                        .mensagem("O coordenador ligado a este curso não está cadastrado")
+                        .build()
+                );
+            }else{
+                Professor coordenador = coordenadorFind.get();
+                coordenador.setCoordenador(true);
+                professorRepository.save(coordenador);
+                curso.setProfessor(coordenador);
             }
         }
         return ValidationModel.<Curso>builder().errors(erros).objects(cursos).build();

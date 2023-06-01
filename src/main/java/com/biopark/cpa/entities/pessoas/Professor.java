@@ -6,6 +6,7 @@ import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.biopark.cpa.entities.grupos.Curso;
 import com.biopark.cpa.entities.grupos.DesafioTurma;
 import com.biopark.cpa.entities.user.User;
 
@@ -17,6 +18,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
@@ -44,9 +46,18 @@ public class Professor {
     @Column(name = "is_coordenador")
     private boolean isCoordenador;  
     
+    @OneToMany(mappedBy = "professor")
+    private List<Curso> cursos;
+
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToMany
+    @JoinTable(name = "professor_desafio_turma",
+               joinColumns = @JoinColumn(name = "professor_id"),
+               inverseJoinColumns = @JoinColumn(name = "desafio_turma_id"))
+    private List<DesafioTurma> desafiosTurma;
 
     @CreationTimestamp
     @Column(name = "created_at")
@@ -56,9 +67,4 @@ public class Professor {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToMany
-    @JoinTable(name = "professor_desafio_turma",
-               joinColumns = @JoinColumn(name = "professor_id"),
-               inverseJoinColumns = @JoinColumn(name = "desafio_turma_id"))
-    private List<DesafioTurma> desafiosTurma;
 }
