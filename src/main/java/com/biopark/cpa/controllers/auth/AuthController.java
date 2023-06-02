@@ -17,11 +17,11 @@ import com.biopark.cpa.form.auth.LoginRequest;
 import com.biopark.cpa.services.security.AuthenticationService;
 
 import jakarta.mail.MessagingException;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("api/auth")
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class AuthController {
     
     private final AuthenticationService service;
@@ -46,13 +46,12 @@ public class AuthController {
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticateToken(@RequestHeader("Authorization") String token){
-        token = token.substring(7);
-        return ResponseEntity.ok(service.authenticate(token));
+        AuthenticationResponse response = service.authenticate(token);
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Boolean> logout(@RequestHeader("Authorization") String token) {
-        token = token.substring(7);
         return ResponseEntity.ok(service.logout(token));
     }
 }
