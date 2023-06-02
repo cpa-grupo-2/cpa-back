@@ -5,7 +5,6 @@ import java.util.List;
 import org.hibernate.annotations.ColumnTransformer;
 
 import com.biopark.cpa.entities.pessoas.Professor;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.opencsv.bean.CsvBindByName;
 
 import jakarta.persistence.Column;
@@ -50,7 +49,6 @@ public class Curso {
     
     @ManyToOne
     @JoinColumn(name = "instituicao_id")
-    @JsonBackReference
     private Instituicao instituicao;
 
     @OneToMany(mappedBy = "curso")
@@ -58,7 +56,6 @@ public class Curso {
 
     @ManyToOne
     @JoinColumn(name = "coordenador_id")
-    @JsonBackReference
     private Professor professor;
 
     @Transient

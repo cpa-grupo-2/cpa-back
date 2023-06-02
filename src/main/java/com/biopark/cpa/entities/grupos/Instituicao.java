@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.hibernate.annotations.ColumnTransformer;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.opencsv.bean.CsvBindByName;
 
 import jakarta.persistence.Column;
@@ -59,7 +58,6 @@ public class Instituicao {
     private String codigoInstituicao;
 
     @OneToMany(mappedBy = "instituicao")
-    @JsonManagedReference
     private List<Curso> cursos;
 
 }
