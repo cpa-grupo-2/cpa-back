@@ -9,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import com.biopark.cpa.entities.grupos.Curso;
 import com.biopark.cpa.entities.grupos.DesafioTurma;
 import com.biopark.cpa.entities.user.User;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,6 +48,7 @@ public class Professor {
     private boolean isCoordenador;  
     
     @OneToMany(mappedBy = "professor")
+    @JsonManagedReference
     private List<Curso> cursos;
 
     @OneToOne
