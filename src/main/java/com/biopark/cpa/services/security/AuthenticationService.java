@@ -12,10 +12,10 @@ import com.biopark.cpa.repository.auth.BlackListTokenRepository;
 import com.biopark.cpa.repository.pessoas.UserRepository;
 import com.biopark.cpa.dto.auth.AuthenticationResponse;
 
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class AuthenticationService {
     
     private final UserRepository repository;
@@ -24,9 +24,13 @@ public class AuthenticationService {
     private final BlackListTokenRepository tokenRepository;
 
     public AuthenticationResponse authenticate(LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(), request.getPassword()));
+        try{
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(), request.getPassword()));
+        }catch(Exception e){
+            return AuthenticationResponse.builder().token(null).status(HttpStatus.FORBIDDEN).level(null).build();
+        }
 
         var user = repository.findByEmail(request.getEmail());
 
@@ -40,7 +44,8 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse authenticate(String token){
-        return AuthenticationResponse.builder().token(token).level(getLevelAccess(token)).build();
+        token = token.substring(7);
+        return AuthenticationResponse.builder().token(token).status(HttpStatus.OK).level(getLevelAccess(token)).build();
     }
 
     private String getLevelAccess(String token){
@@ -48,6 +53,7 @@ public class AuthenticationService {
     }
 
     public Boolean logout(String token){
+        token = token.substring(7);
         var expirationTime = jwtService.extractExpiration(token);
         BlackListToken tokenObj = BlackListToken.builder().token(token).dateExpiration(expirationTime).build();
         tokenRepository.save(tokenObj);
