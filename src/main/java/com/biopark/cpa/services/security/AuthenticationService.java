@@ -1,17 +1,24 @@
 package com.biopark.cpa.services.security;
 
+import java.io.IOException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.biopark.cpa.dto.GenericDTO;
+import com.biopark.cpa.dto.auth.AuthenticationResponse;
 import com.biopark.cpa.entities.token.BlackListToken;
+import com.biopark.cpa.entities.user.User;
 import com.biopark.cpa.form.auth.LoginRequest;
 import com.biopark.cpa.repository.auth.BlackListTokenRepository;
 import com.biopark.cpa.repository.pessoas.UserRepository;
-import com.biopark.cpa.dto.auth.AuthenticationResponse;
+import com.biopark.cpa.services.utils.EmailService;
 
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -22,6 +29,8 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final BlackListTokenRepository tokenRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     public AuthenticationResponse authenticate(LoginRequest request) {
         authenticationManager.authenticate(
@@ -53,5 +62,41 @@ public class AuthenticationService {
         tokenRepository.save(tokenObj);
         SecurityContextHolder.clearContext();
         return true;
+    }
+
+    public GenericDTO recoverPassword(String email) throws IOException, MessagingException{
+        var userDB = repository.findByEmail(email);
+        
+        if (!userDB.isPresent()) {
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("Email informado não encontrado").build();
+        }
+
+        User user = userDB.get();
+
+        String token = jwtService.generateTokenPassword(user);
+
+        emailService.montaEmail(token, email, user.getName());
+
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Em alguns instantes cheque sua caixa de mensagem").build();
+    }
+
+    public GenericDTO resetPassword(String password, String token){
+        if (!jwtService.isTokenValid(token)) {
+            return GenericDTO.builder().status(HttpStatus.FORBIDDEN).mensagem("Token inválido ou expirado").build();
+        }
+
+        Long id = jwtService.extractId(token);
+        var userDB = repository.findById(id);
+
+        if (!userDB.isPresent()) {
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("Não conseguimos encontrar seu usuario").build();
+        }
+
+        User user = userDB.get();
+        user.setPassword(passwordEncoder.encode(password));
+
+        repository.save(user);
+
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Nova senha salva com sucesso!").build();
     }
 }

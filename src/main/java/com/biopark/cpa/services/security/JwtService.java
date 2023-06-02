@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.biopark.cpa.entities.user.User;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -27,12 +29,17 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public String extractUserLevel(String token){
+    public String extractUserLevel(String token) {
         Claims claims = extractAllClaims(token);
         var userLevel = claims.get("userRole", List.class);
         return userLevel.get(0).toString().replace("}", "").split("=")[1];
     }
 
+    public Long extractId(String token){
+        Claims claims = extractAllClaims(token);
+        Long userId = claims.get("id", Long.class);
+        return userId;
+    }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
@@ -41,6 +48,22 @@ public class JwtService {
 
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
+    }
+
+    public String generateTokenPassword(User user) {
+        return generateTokenPassword(new HashMap<>(), user);
+    }
+
+    public String generateTokenPassword(Map<String, Object> extraClaims, User user) {
+        return Jwts
+                .builder()
+                .setClaims(extraClaims)
+                .setSubject(user.getUsername())
+                .claim("id", user.getId())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30))
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
@@ -58,6 +81,10 @@ public class JwtService {
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    }
+
+    public boolean isTokenValid(String token) {
+        return !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {
