@@ -38,7 +38,7 @@ public class EmailService {
         byte[] bytes = Files.readAllBytes(Paths.get("src/main/resources/view/templateEmail.html"));
         String htmlTemplate = new String(bytes, StandardCharsets.UTF_8);
         htmlTemplate = htmlTemplate.replace("${name}", nome);
-        htmlTemplate = htmlTemplate.replace("${linkRedefinirSenha}", token);
+        htmlTemplate = htmlTemplate.replace("${linkRedefinirSenha}", "http://localhost:3000/resetar-senha?token=" + token);
 
         sendEmail(htmlTemplate, email);
     }
