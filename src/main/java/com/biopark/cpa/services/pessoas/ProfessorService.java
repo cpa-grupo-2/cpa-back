@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.dto.cadastroCsv.ErroValidation;
 import com.biopark.cpa.dto.cadastroCsv.ValidationModel;
@@ -83,25 +85,24 @@ public class ProfessorService {
 
         for (ProfessorModel professorModel : professoresModel) {
             User user = User.builder()
-                .cpf(professorModel.getCpf())
-                .email(professorModel.getEmail())
-                .name(professorModel.getName())
-                .telefone(professorModel.getTelefone())
-                .password(generatePassword.getPwd())
-                .role(Role.PROFESSOR)
-                .level(Level.USER)
-                .build();
-            
+                    .cpf(professorModel.getCpf())
+                    .email(professorModel.getEmail())
+                    .name(professorModel.getName())
+                    .telefone(professorModel.getTelefone())
+                    .password(generatePassword.getPwd())
+                    .role(Role.PROFESSOR)
+                    .level(Level.USER)
+                    .build();
+
             userRepository.upsert(user);
 
             user = userRepository.findByCpf(user.getCpf()).get();
 
             professorRepository.upsert(
-                Professor.builder().cracha(professorModel.getCracha())
-                .isCoordenador(false)
-                .user(user)
-                .build()
-            );
+                    Professor.builder().cracha(professorModel.getCracha())
+                            .isCoordenador(false)
+                            .user(user)
+                            .build());
         }
 
         return CadastroDTO.builder().status(HttpStatus.OK).erros(errors).warnings(warnings).build();
@@ -170,5 +171,71 @@ public class ProfessorService {
 
         return ValidationModel.<ProfessorModel>builder().errors(erroValidations).warnings(warnings).objects(unicos)
                 .build();
+    }
+
+    // Filtrar Professor por crachá
+    public Professor buscarPorCracha(String cracha) {
+        var optionalProfessor = professorRepository.findByCracha(cracha);
+
+        if (optionalProfessor.isPresent()) {
+            return optionalProfessor.get();
+        } else {
+            throw new RuntimeException("Professor não encontrado!");
+        }
+    }
+
+    // Filtrar Professor por id
+    public Professor buscarPorId(Long id) {
+        var optionalProfessor = professorRepository.findById(id);
+
+        if (optionalProfessor.isPresent()) {
+            return optionalProfessor.get();
+        } else {
+            throw new RuntimeException("Professor não encontrado!");
+        }
+    }
+
+    // Filtrar todos os professor
+    public List<Professor> buscarTodosProfessores() {
+        var professor = professorRepository.findAll();
+        if (professor.isEmpty()) {
+            throw new RuntimeException("Não há professores cadastradas!");
+        }
+        return professor;
+    }
+
+    // Editar Turma por crachá
+    public GenericDTO editarTurma(Professor professorRequest) {
+        try {
+            Professor professor = buscarPorCracha(professorRequest.getCracha());
+            professor.getUser().setName(professorRequest.getUser().getName());
+            professor.getUser().setTelefone(professorRequest.getUser().getTelefone());
+            professor.getUser().setEmail(professorRequest.getUser().getEmail());
+            professorRepository.save(professor);
+            return GenericDTO.builder().status(HttpStatus.OK)
+                    .mensagem("Professor " + professorRequest.getCracha() + " editado com sucesso")
+                    .build();
+        } catch (Exception e) {
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
+        }
+    }
+
+    // Excluir Professor
+    public GenericDTO excluirProfessor(Long id) {
+        try {
+            var professorDB = professorRepository.findById(id);
+            if (!professorDB.isPresent()) {
+                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("professor não encontrada").build();
+            }
+            Professor professor = professorDB.get();
+            professorRepository.delete(professor);
+            return GenericDTO.builder().status(HttpStatus.OK)
+                    .mensagem("Professor " + professor.getId() + " excluído com sucesso")
+                    .build();
+        } catch (EmptyResultDataAccessException e) {
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
+                    .mensagem("Professor " + id + " não encontrado")
+                    .build();
+        }
     }
 }
