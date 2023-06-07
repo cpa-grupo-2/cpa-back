@@ -32,13 +32,13 @@ public class AuthController {
         return ResponseEntity.status(authenticationResponse.getStatus()).body(authenticationResponse);
     }
 
-    @PostMapping("public/email")
+    @PostMapping("/public/email")
     public ResponseEntity<GenericDTO> sendEmail(@RequestBody LoginRequest request) throws IOException, MessagingException{
         GenericDTO response = service.recoverPassword(request.getEmail());
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    @PatchMapping("public/resetPassword")
+    @PatchMapping("/public/resetPassword")
     public ResponseEntity<GenericDTO> resetPassword(@RequestBody LoginRequest request, @RequestParam("token") String token){
         GenericDTO response = service.resetPassword(request.getPassword(), token);
         return ResponseEntity.status(response.getStatus()).body(response);

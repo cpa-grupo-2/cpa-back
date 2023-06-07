@@ -135,8 +135,11 @@ public class DesafioService {
         if (turma.getDesafios() == null) {
             turma.setDesafios(desafios);
         } else {
+            desafios.removeAll(turma.getDesafios());
             desafios.addAll(turma.getDesafios());
         }
+
+
 
         turma.setCodCurso(turma.getCurso().getCodCurso());
         turma.setDesafios(desafios);

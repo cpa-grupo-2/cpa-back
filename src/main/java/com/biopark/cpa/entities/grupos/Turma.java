@@ -1,8 +1,11 @@
 package com.biopark.cpa.entities.grupos;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.hibernate.annotations.ColumnTransformer;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import com.opencsv.bean.CsvBindByName;
 
@@ -65,6 +68,14 @@ public class Turma {
         inverseJoinColumns = @JoinColumn(name = "desafio_id")
     )
     private List<Desafio> desafios;
+
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @Transient
     @NotBlank(message = "O campo cod curso não deve ser nulo")

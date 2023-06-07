@@ -1,5 +1,10 @@
 package com.biopark.cpa.entities.pessoas;
 
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import com.biopark.cpa.entities.user.User;
 
 import jakarta.persistence.Column;
@@ -36,4 +41,12 @@ public class Funcionario {
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

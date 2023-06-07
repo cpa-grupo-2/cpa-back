@@ -1,8 +1,11 @@
 package com.biopark.cpa.entities.grupos;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.hibernate.annotations.ColumnTransformer;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import com.biopark.cpa.entities.pessoas.Professor;
 import com.opencsv.bean.CsvBindByName;
@@ -67,4 +70,12 @@ public class Curso {
     @NotBlank(message = "O campo cracha coordenador não deve ser nulo")
     @CsvBindByName(column = "coordenador")
     private String crachaCoordenador;
+
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

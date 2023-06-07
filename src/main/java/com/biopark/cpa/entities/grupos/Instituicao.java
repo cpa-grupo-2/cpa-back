@@ -1,8 +1,11 @@
 package com.biopark.cpa.entities.grupos;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.hibernate.annotations.ColumnTransformer;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import com.opencsv.bean.CsvBindByName;
 
@@ -60,4 +63,11 @@ public class Instituicao {
     @OneToMany(mappedBy = "instituicao")
     private List<Curso> cursos;
 
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

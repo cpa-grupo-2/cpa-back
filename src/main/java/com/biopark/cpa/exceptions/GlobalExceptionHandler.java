@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 
 @ControllerAdvice
@@ -56,5 +57,12 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ExceptionModel fileError(IOException e) {
         return ExceptionModel.builder().status(HttpStatus.INTERNAL_SERVER_ERROR).mensagem("tivemos erros lendo arquivos: "+e.getMessage()).build();
+    }
+
+    @ExceptionHandler({ExpiredJwtException.class})
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseBody
+    public ExceptionModel expiredToken(){
+        return ExceptionModel.builder().status(HttpStatus.FORBIDDEN).mensagem("token inválido").build();
     }
 }
