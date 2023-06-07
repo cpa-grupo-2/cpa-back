@@ -3,7 +3,6 @@ package com.biopark.cpa.controllers.grupos;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +23,6 @@ public class QuestoesController {
     private QuestoesService questoesService;
     private QuestoesRepository questoesRepository;
 
-    @Autowired
     public QuestoesController(QuestoesService questoesService) {
         this.questoesService = questoesService;
     }

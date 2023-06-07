@@ -1,15 +1,19 @@
 package com.biopark.cpa.services.pessoas;
 
+import java.util.List;
 import java.util.Set;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.biopark.cpa.dto.GenericDTO;
+import com.biopark.cpa.entities.pessoas.MembrosCPA;
 import com.biopark.cpa.entities.user.User;
 import com.biopark.cpa.entities.user.enums.Level;
 import com.biopark.cpa.entities.user.enums.Role;
 import com.biopark.cpa.form.pessoas.CadastroCPA;
+import com.biopark.cpa.repository.pessoas.MembrosCPARepository;
 import com.biopark.cpa.repository.pessoas.UserRepository;
 import com.biopark.cpa.services.security.GeneratePassword;
 
@@ -30,12 +34,13 @@ public class MembrosCPAService {
         if (!violacoes.isEmpty()) {
             String mensagem = "";
             for (ConstraintViolation<CadastroCPA> violacao : violacoes) {
-                mensagem += violacao.getMessage()+"; ";
+                mensagem += violacao.getMessage() + "; ";
             }
             return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem(mensagem).build();
         }
 
-        if ((userRepository.findByEmail(usuarioCPA.getEmail()).isPresent())|(userRepository.findByCpf(usuarioCPA.getCpf()).isPresent())) {
+        if ((userRepository.findByEmail(usuarioCPA.getEmail()).isPresent())
+                | (userRepository.findByCpf(usuarioCPA.getCpf()).isPresent())) {
             return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Usuario já cadastrado").build();
         }
 
@@ -53,4 +58,61 @@ public class MembrosCPAService {
         return GenericDTO.builder().status(HttpStatus.OK).mensagem("Usuário cadastrado com sucesso.").build();
     }
 
+    /* 
+    // Filtrar Membro CPA por id
+    public MembrosCPA buscarPorID(Long id) {
+        var optionalMembrosCPA = MembrosCPARepository.findById(id);
+
+        if (optionalMembrosCPA.isPresent()) {
+            return optionalMembrosCPA.get();
+        } else {
+            throw new RuntimeException("Membros CPA não encontrado!");
+
+        }
+    }
+
+    // Filtrar todos os Membros CPA
+    public List<MembrosCPA> buscarTodosMembrosCPA() {
+        var membrosCPA = MembrosCPARepository.findAll();
+        if (membrosCPA.isEmpty()) {
+            throw new RuntimeException("Não há Membros CPA cadastrados!");
+        }
+        return membrosCPA;
+    }
+
+    // Editar Membro CPA
+    public GenericDTO editarMembroCPA(MembrosCPA membrosCPARequest) {
+        try {
+            MembrosCPA membrosCPA = buscarPorID(membrosCPARequest.getId());
+            membrosCPA.getUser().setName(membrosCPARequest.getUser().getName());
+            membrosCPA.getUser().setTelefone(membrosCPARequest.getUser().getTelefone());
+            membrosCPA.getUser().setEmail(membrosCPARequest.getUser().getEmail());
+            membrosCPARepository.save(membrosCPA);
+            return GenericDTO.builder().status(HttpStatus.OK)
+                    .mensagem("Membro CPA " + membrosCPARequest.getId() + "editado com sucesso")
+                    .build();
+        } catch (Exception e) {
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
+        }
+    }
+
+    // Excluir Membro CPA
+    public GenericDTO excluirMembroCPA(Long id) {
+        try {
+            var membroCPADB = MembrosCPARepository.findById(id);
+            if (!membroCPADB.isPresent()) {
+                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("membro CPA não encontrado").build();
+            }
+            MembrosCPA membrosCPA = membroCPADB.get();
+            MembrosCPARepository.delete(membrosCPA);
+            return GenericDTO.builder().status(HttpStatus.OK)
+                    .mensagem("Membro CPA " + membrosCPA.getId() + " excluído com sucesso")
+                    .build();
+        } catch (EmptyResultDataAccessException e) {
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
+                    .mensagem("Membro CPA " + id + " não encontrado")
+                    .build();
+        }
+    }
+*/
 }

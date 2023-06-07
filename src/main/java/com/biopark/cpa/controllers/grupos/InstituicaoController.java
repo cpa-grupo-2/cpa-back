@@ -69,7 +69,6 @@ public class InstituicaoController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    // @DeleteMapping("/{id}")
     @DeleteMapping
     public ResponseEntity<GenericDTO> excluirInstituicao(@RequestParam("id") int idRequest) {
         Long id = Long.valueOf(idRequest);
