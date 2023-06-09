@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -15,10 +16,13 @@ import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.dto.cadastroCsv.ErroValidation;
 import com.biopark.cpa.dto.cadastroCsv.ValidationModel;
 import com.biopark.cpa.entities.grupos.Desafio;
+import com.biopark.cpa.entities.grupos.DesafioTurma;
 import com.biopark.cpa.entities.grupos.Turma;
+import com.biopark.cpa.entities.pessoas.Aluno;
 import com.biopark.cpa.form.grupos.DesafioTurmaModel;
 import com.biopark.cpa.repository.grupo.DesafioRepository;
-import com.biopark.cpa.repository.grupo.TurmaRepository;
+import com.biopark.cpa.repository.grupo.DesafioTurmaRepository;
+import com.biopark.cpa.services.pessoas.AlunoService;
 import com.biopark.cpa.services.utils.CsvParserService;
 
 import jakarta.transaction.Transactional;
@@ -30,8 +34,10 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class DesafioService {
     private final CsvParserService csvParserService;
+    private final AlunoService alunoService;
+    private final TurmaService turmaService;
     private final DesafioRepository desafioRepository;
-    private final TurmaRepository turmaRepository;
+    private final DesafioTurmaRepository desafioTurmaRepository;
     private final Validator validator;
 
     @Transactional
@@ -79,14 +85,13 @@ public class DesafioService {
                 continue;
             }
 
-            if (desafioRepository.findByNomeDesafio(desafio.getNomeDesafio().toLowerCase()).isPresent()) {
+            try {
+                buscarPorNome(desafio.getNomeDesafio());
                 erroValidations
                         .add(ErroValidation.builder().linha(linha).mensagem("Desafio já cadastrado").build());
-            }
+            } catch (NoSuchElementException e) {}
         }
-
-        return ValidationModel.<Desafio>builder().errors(erroValidations).warnings(warnings).objects(unicos)
-                .build();
+        return ValidationModel.<Desafio>builder().errors(erroValidations).warnings(warnings).objects(unicos).build();
     }
 
     public GenericDTO associarDesafioTurma(DesafioTurmaModel desafioTurmaModel) {
@@ -100,24 +105,28 @@ public class DesafioService {
             return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem(mensagem).build();
         }
         desafioTurmaModel.getDesafioId().removeIf(item -> item == null);
-        
-        if (desafioTurmaModel.getDesafioId().size()<1) {
-            return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem("não foi informado nenhum desafio").build();
+
+        if (desafioTurmaModel.getDesafioId().size() < 1) {
+            return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem("não foi informado nenhum desafio")
+                    .build();
         }
 
         if (desafioTurmaModel.getTurmaId() == 0) {
-            return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem("não foi informado nenhuma turma").build();
+            return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem("não foi informado nenhuma turma")
+                    .build();
         }
 
-        var turmaDB = turmaRepository.findById(Long.valueOf(desafioTurmaModel.getTurmaId()));
-        if (!turmaDB.isPresent()) {
+        Turma turma;
+
+        try {
+            turma = turmaService.buscarPorId(Long.valueOf(desafioTurmaModel.getTurmaId()));
+        } catch (Exception e) {
             return GenericDTO.builder()
                     .status(HttpStatus.NOT_FOUND)
                     .mensagem("Turma " + desafioTurmaModel.getTurmaId() + " não encontrado")
                     .build();
         }
 
-        Turma turma = turmaDB.get();
         List<Desafio> desafios = new ArrayList<>();
 
         for (int id : desafioTurmaModel.getDesafioId()) {
@@ -132,20 +141,39 @@ public class DesafioService {
             desafios.add(desafio.get());
         }
 
-        if (turma.getDesafios() == null) {
-            turma.setDesafios(desafios);
-        } else {
-            desafios.removeAll(turma.getDesafios());
-            desafios.addAll(turma.getDesafios());
+        desafios.removeAll(turma.getDesafios());
+
+        if (desafios.isEmpty()) {
+            return GenericDTO.builder().status(HttpStatus.CONFLICT)
+                    .mensagem("As disciplinas já tem relação com esta turma").build();
         }
 
+        List<DesafioTurma> relacao = new ArrayList<>();
+        List<Aluno> alunos = alunoService.buscarPorTurma(turma.getId());
 
+        for (Desafio desafio : desafios) {
+            relacao.add(DesafioTurma.builder().turma(turma).desafio(desafio).alunos(alunos).build());
+        }
 
-        turma.setCodCurso(turma.getCurso().getCodCurso());
-        turma.setDesafios(desafios);
-        turmaRepository.save(turma);
+        desafioTurmaRepository.saveAll(relacao);
+
         return GenericDTO.builder().status(HttpStatus.OK).mensagem("Disciplinas associadas com sucesso").build();
     }
+
+    public Desafio buscarPorNome(String nome) {
+        var optional = desafioRepository.findByNomeDesafio(nome.toLowerCase());
+        if (!optional.isPresent()) {
+            throw new NoSuchElementException();
+        }
+        return optional.get();
+    }
+
+
+
+
+
+
+
 
     public Desafio buscarPorId(Long id) {
         var optionalDesafio = desafioRepository.findById(id);

@@ -2,6 +2,7 @@ package com.biopark.cpa.entities.pessoas;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -32,10 +33,12 @@ public class Funcionario {
 
     @Column(name = "cracha", unique = true, nullable = false)
     @NotBlank(message = "cracha não deve ser nulo")
+    @ColumnTransformer(write = "LOWER(?)")
     private String cracha;
 
     @Column(name = "area", nullable = false)
     @NotBlank(message = "area não deve ser nulo")
+    @ColumnTransformer(write = "LOWER(?)")
     private String area;
 
     @OneToOne

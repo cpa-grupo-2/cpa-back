@@ -1,5 +1,6 @@
 package com.biopark.cpa.services.pessoas;
 
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MembrosCPAService {
     private final UserRepository userRepository;
+    private final UserService userService;
     private final Validator validator;
     private final GeneratePassword generatePassword;
 
@@ -35,8 +37,11 @@ public class MembrosCPAService {
             return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem(mensagem).build();
         }
 
-        if ((userRepository.findByEmail(usuarioCPA.getEmail()).isPresent())|(userRepository.findByCpf(usuarioCPA.getCpf()).isPresent())) {
-            return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Usuario já cadastrado").build();
+        try {
+            userService.buscarPorCpf(usuarioCPA.getCpf());
+            userService.buscarPorEmail(usuarioCPA.getEmail());
+            return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Usuario já cadastrado").build();   
+        } catch (NoSuchElementException e) {
         }
 
         User user = User.builder()

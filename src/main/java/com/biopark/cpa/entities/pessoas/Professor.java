@@ -3,6 +3,7 @@ package com.biopark.cpa.entities.pessoas;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -38,6 +39,7 @@ public class Professor {
 
     @Column(name = "cracha", unique = true, nullable = false)
     @NotBlank(message = "cracha não deve ser nulo")
+    @ColumnTransformer(write = "LOWER(?)")
     private String cracha;
 
     @Column(name = "is_coordenador")

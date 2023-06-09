@@ -3,6 +3,7 @@ package com.biopark.cpa.services.pessoas;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ProfessorService {
 
+    private final UserService userService;
     private final CsvParserService csvParserService;
     private final UserRepository userRepository;
     private final ProfessorRepository professorRepository;
@@ -83,25 +85,24 @@ public class ProfessorService {
 
         for (ProfessorModel professorModel : professoresModel) {
             User user = User.builder()
-                .cpf(professorModel.getCpf())
-                .email(professorModel.getEmail())
-                .name(professorModel.getName())
-                .telefone(professorModel.getTelefone())
-                .password(generatePassword.getPwd())
-                .role(Role.PROFESSOR)
-                .level(Level.USER)
-                .build();
-            
+                    .cpf(professorModel.getCpf())
+                    .email(professorModel.getEmail())
+                    .name(professorModel.getName())
+                    .telefone(professorModel.getTelefone())
+                    .password(generatePassword.getPwd())
+                    .role(Role.PROFESSOR)
+                    .level(Level.USER)
+                    .build();
+
             userRepository.upsert(user);
 
-            user = userRepository.findByCpf(user.getCpf()).get();
+            user = userService.buscarPorCpf(professorModel.getCpf());
 
             professorRepository.upsert(
-                Professor.builder().cracha(professorModel.getCracha())
-                .isCoordenador(false)
-                .user(user)
-                .build()
-            );
+                    Professor.builder().cracha(professorModel.getCracha())
+                            .isCoordenador(false)
+                            .user(user)
+                            .build());
         }
 
         return CadastroDTO.builder().status(HttpStatus.OK).erros(errors).warnings(warnings).build();
@@ -158,10 +159,12 @@ public class ProfessorService {
                 continue;
             }
 
-            if (userRepository.findByEmail(professor.getEmail()).isPresent()
-                    | userRepository.findByCpf(professor.getCpf()).isPresent()
-                    | professorRepository.findByCracha(professor.getCracha()).isPresent()) {
-                erroValidations.add(ErroValidation.builder().linha(linha).mensagem("Professor já cadastrado").build());
+            try {
+                userService.buscarPorEmail(professor.getEmail());
+                userService.buscarPorCpf(professor.getCpf());
+                buscarPorCracha(professor.getCracha());
+                erroValidations.add(ErroValidation.builder().linha(linha).mensagem("Professor já cadastrado").build());    
+            } catch (NoSuchElementException e) {
             }
         }
 
@@ -171,4 +174,14 @@ public class ProfessorService {
         return ValidationModel.<ProfessorModel>builder().errors(erroValidations).warnings(warnings).objects(unicos)
                 .build();
     }
+
+    public Professor buscarPorCracha(String cracha) {
+        var optional = professorRepository.findByCracha(cracha);
+
+        if (!optional.isPresent()) {
+            throw new NoSuchElementException("Instituição não encontrada!");
+        }
+        return optional.get();
+    }
+
 }

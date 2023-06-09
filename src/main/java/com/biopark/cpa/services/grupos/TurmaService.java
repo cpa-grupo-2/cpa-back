@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -13,8 +14,8 @@ import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.dto.cadastroCsv.ErroValidation;
 import com.biopark.cpa.dto.cadastroCsv.ValidationModel;
+import com.biopark.cpa.entities.grupos.Curso;
 import com.biopark.cpa.entities.grupos.Turma;
-import com.biopark.cpa.repository.grupo.CursoRepository;
 import com.biopark.cpa.repository.grupo.TurmaRepository;
 import com.biopark.cpa.services.utils.CsvParserService;
 
@@ -24,12 +25,12 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class TurmaService {
-    private final TurmaRepository turmaRepository;
-    private final CursoRepository cursoRepository;
     private final CsvParserService csvParserService;
+    private final CursoService cursoService;
+    private final TurmaRepository turmaRepository;
 
     @Transactional
-    public CadastroDTO cadastrarTurma(List<Turma> turmas, boolean update){
+    public CadastroDTO cadastrarTurma(List<Turma> turmas, boolean update) {
         List<ErroValidation> errors = csvParserService.validaEntrada(turmas);
         List<ErroValidation> warnings = new ArrayList<>();
 
@@ -89,9 +90,11 @@ public class TurmaService {
                 continue;
             }
 
-            if (turmaRepository.findByCodTurma(turma.getCodTurma().toLowerCase()).isPresent()) {
+            try {
+                buscarPorCodigo(turma.getCodTurma());
                 erroValidations
                         .add(ErroValidation.builder().linha(linha).mensagem("Turma já cadastrada").build());
+            } catch (NoSuchElementException e) {
             }
         }
 
@@ -105,30 +108,42 @@ public class TurmaService {
         int linha = 0;
         for (Turma turma : turmas) {
             linha++;
-            var cursoFind = cursoRepository.findByCodCurso(turma.getCodCurso().toLowerCase());
-            if (!cursoFind.isPresent()) {
+
+            try {
+                Curso curso = cursoService.buscarPorCodigo(turma.getCodCurso());
+                turma.setCurso(curso);
+            } catch (NoSuchElementException e) {
                 erros.add(
                         ErroValidation.builder()
                                 .linha(linha)
-                                .mensagem("A instituição ligada a este curso não está cadastrada")
+                                .mensagem("O curso ligado a esta turma não está cadastrada")
                                 .build());
-            } else {
-                turma.setCurso(cursoFind.get());
             }
         }
         return ValidationModel.<Turma>builder().errors(erros).objects(turmas).build();
     }
 
-    // Filtrar Turma por ID
     public Turma buscarPorCodigo(String codigo) {
-        var optionalTurma = turmaRepository.findByCodTurma(codigo);
+        var optionalTurma = turmaRepository.findByCodTurma(codigo.toLowerCase());
 
-        if (optionalTurma.isPresent()) {
-            return optionalTurma.get();
-        } else {
-            throw new RuntimeException("Turma não encontrada!");
+        if (!optionalTurma.isPresent()) {
+            throw new NoSuchElementException("Turma não encontrada!");
         }
+        return optionalTurma.get();
     }
+
+    public Turma buscarPorId(Long id){
+        var optional = turmaRepository.findById(id);
+
+        if (!optional.isPresent()) {
+            throw new NoSuchElementException();
+        }
+
+        return optional.get();
+    }
+
+
+
 
     public List<Turma> buscarTodasTurmas() {
         var turmas = turmaRepository.findAll();
@@ -137,7 +152,6 @@ public class TurmaService {
         }
         return turmas;
     }
-
     // Editar Turma por ID
     public GenericDTO editarTurma(Turma turmaRequest) {
         try {

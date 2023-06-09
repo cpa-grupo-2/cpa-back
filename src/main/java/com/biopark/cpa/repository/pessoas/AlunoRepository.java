@@ -1,5 +1,6 @@
 package com.biopark.cpa.repository.pessoas;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,6 +14,8 @@ import jakarta.transaction.Transactional;
 
 public interface AlunoRepository extends JpaRepository<Aluno, Long>{
     Optional<Aluno> findByra(String ra);
+
+    List<Aluno> findByDesafioTurmas_turma_id(Long id);
 
     @Modifying
     @Transactional

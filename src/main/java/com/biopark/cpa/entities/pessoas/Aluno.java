@@ -3,6 +3,7 @@ package com.biopark.cpa.entities.pessoas;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -38,6 +39,7 @@ public class Aluno {
     private Long id;
 
     @Column(name = "ra", unique = true, nullable = false)
+    @ColumnTransformer(write = "LOWER(?)")
     private String ra;
 
     @OneToOne

@@ -27,9 +27,10 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class FuncionarioService {
     private final CsvParserService csvParserService;
-    private final GeneratePassword generatePassword;
+    private final UserService userService;
     private final UserRepository userRepository;
     private final FuncionarioRepository funcionarioRepository;
+    private final GeneratePassword generatePassword;
 
     @Transactional
     public CadastroDTO cadastrarFuncionario(List<FuncionarioModel> funcionariosModel, boolean update) {
@@ -93,7 +94,7 @@ public class FuncionarioService {
                     .level(Level.USER)
                     .build();
 
-            user = userRepository.findByCpf(user.getCpf()).get();
+            user = userService.buscarPorCpf(funcionarioModel.getCpf());
 
             Funcionario funcionario = Funcionario.builder()
                     .cracha(funcionarioModel.getCracha())
