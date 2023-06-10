@@ -204,8 +204,8 @@ public class ProfessorService {
         return professor;
     }
 
-    // Editar Turma por crachá
-    public GenericDTO editarTurma(Professor professorRequest) {
+    // Editar Professor por crachá
+    public GenericDTO editarProfessor(Professor professorRequest) {
         try {
             Professor professor = buscarPorCracha(professorRequest.getCracha());
             professor.getUser().setName(professorRequest.getUser().getName());
