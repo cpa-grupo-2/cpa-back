@@ -30,28 +30,32 @@ public class StartApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        User userAdmin = User.builder()
-                .cpf("113.015.639-78")
-                .email(adminEmail)
-                .name("admin")
-                .level(Level.CPA)
-                .telefone("44998139378")
-                .role(Role.EXTERNO)
-                .password(passwordEncoder.encode(adminPass))
-                .build();
+        try{
+            User userAdmin = User.builder()
+                    .cpf("113.015.639-78")
+                    .email(adminEmail)
+                    .name("admin")
+                    .level(Level.CPA)
+                    .telefone("44998139378")
+                    .role(Role.EXTERNO)
+                    .password(passwordEncoder.encode(adminPass))
+                    .build();
 
-        userRepository.save(userAdmin);
+            userRepository.save(userAdmin);
 
-        User user = User.builder()
-                .cpf("114.035.789-78")
-                .email(userEmail)
-                .name("user")
-                .level(Level.USER)
-                .telefone("546546546466")
-                .role(Role.EXTERNO)
-                .password(passwordEncoder.encode(UserPass))
-                .build();
+            User user = User.builder()
+                    .cpf("114.035.789-78")
+                    .email(userEmail)
+                    .name("user")
+                    .level(Level.USER)
+                    .telefone("546546546466")
+                    .role(Role.EXTERNO)
+                    .password(passwordEncoder.encode(UserPass))
+                    .build();
 
-        userRepository.save(user);
+            userRepository.save(user);
+        }catch(Exception e){
+
+        }
     }
 }
