@@ -3,6 +3,7 @@ package com.biopark.cpa.controllers.pessoas;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,10 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.biopark.cpa.dto.GenericDTO;
-import com.biopark.cpa.entities.pessoas.MembrosCPA;
+import com.biopark.cpa.dto.MembroCPADTO;
+// import com.biopark.cpa.entities.pessoas.MembrosCPA;
 import com.biopark.cpa.entities.user.User;
 import com.biopark.cpa.form.pessoas.CadastroCPA;
-import com.biopark.cpa.repository.pessoas.MembrosCPARepository;
+// import com.biopark.cpa.repository.pessoas.MembrosCPARepository;
 import com.biopark.cpa.services.pessoas.MembrosCPAService;
 
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MembroCPAController {
     private final MembrosCPAService membrosCPAService;
-    private final MembrosCPARepository membrosCPARepository;
 
     @PostMapping
     @PreAuthorize("hasRole('CPA')")
@@ -38,35 +39,32 @@ public class MembroCPAController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    /* 
+    
     @GetMapping
-    public ResponseEntity<Optional<User>> buscarPorId (@RequestParam(name = "id") Long id) {
-            var membroCPA = membrosCPARepository.findById(id);
-            if (membroCPA == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(membroCPA);
-            }
+    public ResponseEntity<MembroCPADTO> buscarPorId (@RequestParam(name = "id") Long id) {
+            MembroCPADTO membroCPA = membrosCPAService.buscarPorID(id);
             return ResponseEntity.status(HttpStatus.OK).body(membroCPA);
         }
 
     @GetMapping("/membrosCPA")
-    public ResponseEntity<List<MembrosCPA>> listarMembrosCPA() {
-        List<MembrosCPA> membrosCPA = membrosCPARepository.findAll();
+    public ResponseEntity<List<MembroCPADTO>> listarMembrosCPA() {
+        List<MembroCPADTO> membrosCPA = membrosCPAService.buscarTodosMembrosCPA();
         if (membrosCPA.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(membrosCPA);
     }
     
-    @PutMapping
-    public ResponseEntity<GenericDTO> editarMembroCPA(@RequestBody MembrosCPA membrosCPA) {
-        GenericDTO response = MembrosCPAService.editarMembroCPA(membrosCPA);
-        return ResponseEntity.status(response.getStatus()).body(response);
-    }
+    // @PutMapping
+    // public ResponseEntity<GenericDTO> editarMembroCPA(@RequestBody MembrosCPA membrosCPA) {
+    //     GenericDTO response = MembrosCPAService.editarMembroCPA(membrosCPA);
+    //     return ResponseEntity.status(response.getStatus()).body(response);
+    // }
 
-    @DeleteMapping
-    public ResponseEntity<GenericDTO> excluirMembroCpa(@PathVariable Long id) {
-        GenericDTO response = MembrosCPAService.excluirMembroCPA(id);
-        return ResponseEntity.status(response.getStatus()).body(response);
-    }
-    */
+    // @DeleteMapping
+    // public ResponseEntity<GenericDTO> excluirMembroCpa(@PathVariable Long id) {
+    //     GenericDTO response = MembrosCPAService.excluirMembroCPA(id);
+    //     return ResponseEntity.status(response.getStatus()).body(response);
+    // }
+    
 }
