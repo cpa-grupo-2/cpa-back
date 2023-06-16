@@ -97,7 +97,6 @@ public class InstituicaoService {
 
     public Instituicao buscarPorCodigo(String codigo) {
         var optionalInstituicao = instituicaoRepository.findByCodigoInstituicao(codigo.toLowerCase().strip());
-
         if (!optionalInstituicao.isPresent()) {
             throw new NoSuchElementException("Instituição não encontrada!");
         }
@@ -108,7 +107,7 @@ public class InstituicaoService {
     public List<Instituicao> buscarTodasInstituicoes() {
         var instituicoes = instituicaoRepository.findAll();
         if (instituicoes.isEmpty()) {
-            throw new RuntimeException("Não há instituições cadastradas!");
+            throw new NoSuchElementException("Não há instituições cadastradas!");
         }
         return instituicoes;
     }

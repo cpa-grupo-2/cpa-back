@@ -41,7 +41,7 @@ public class QuestoesService {
     public List<Questoes> buscarTodasQuestoes() {
         var questoes = questoesRepository.findAll();
         if (questoes.isEmpty()) {
-            throw new RuntimeException("Não há questões cadastradas!");
+            throw new NoSuchElementException("Não há questões cadastradas!");
         }
         return questoes;
     }

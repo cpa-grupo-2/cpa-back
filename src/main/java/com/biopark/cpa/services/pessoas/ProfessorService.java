@@ -194,7 +194,7 @@ public class ProfessorService {
         if (optionalProfessor.isPresent()) {
             return optionalProfessor.get();
         } else {
-            throw new RuntimeException("Professor não encontrado!");
+            throw new NoSuchElementException("Professor não encontrado!");
         }
     }
 
@@ -202,7 +202,7 @@ public class ProfessorService {
     public List<Professor> buscarTodosProfessores() {
         var professor = professorRepository.findAll();
         if (professor.isEmpty()) {
-            throw new RuntimeException("Não há professores cadastradas!");
+            throw new NoSuchElementException("Não há professores cadastradas!");
         }
         return professor;
     }

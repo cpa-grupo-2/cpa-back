@@ -44,11 +44,8 @@ public class CursoController {
     }
 
     @GetMapping
-    public ResponseEntity<Optional<Curso>> buscarCodigoCurso(@RequestParam(name = "codCurso") String codigoCurso) {
-        var curso = cursoRepository.findByCodCurso(codigoCurso);
-        if (curso == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(curso);
-        }
+    public ResponseEntity<Curso> buscarCodigoCurso(@RequestParam(name = "codCurso") String codigoCurso) {
+        Curso curso = cursoService.buscarPorCodigo(codigoCurso);
         return ResponseEntity.status(HttpStatus.OK).body(curso);
     }
 

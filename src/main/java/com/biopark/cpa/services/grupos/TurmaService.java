@@ -125,12 +125,12 @@ public class TurmaService {
 
     public Turma buscarPorCodigo(String codigo) {
         var optionalTurma = turmaRepository.findByCodTurma(codigo.toLowerCase());
-
         if (!optionalTurma.isPresent()) {
             throw new NoSuchElementException("Turma não encontrada!");
         }
         return optionalTurma.get();
     }
+
 
     public Turma buscarPorId(Long id){
         var optional = turmaRepository.findById(id);
@@ -138,21 +138,20 @@ public class TurmaService {
         if (!optional.isPresent()) {
             throw new NoSuchElementException();
         }
-
         return optional.get();
     }
-
-
 
 
     public List<Turma> buscarTodasTurmas() {
         var turmas = turmaRepository.findAll();
         if (turmas.isEmpty()) {
-            throw new RuntimeException("Não há turmas cadastradas!");
+            throw new NoSuchElementException("Não há turmas cadastradas!");
         }
         return turmas;
     }
-    // Editar Turma por ID
+
+
+    // Editar Turma por Código
     public GenericDTO editarTurma(Turma turmaRequest) {
         try {
             Turma turma = buscarPorCodigo(turmaRequest.getCodTurma());

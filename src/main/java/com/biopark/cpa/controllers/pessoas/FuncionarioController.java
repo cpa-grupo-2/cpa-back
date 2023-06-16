@@ -45,22 +45,14 @@ public class FuncionarioController {
     }
 
     @GetMapping
-    public ResponseEntity<Optional<Funcionario>> buscarIdFuncionario(
-            @RequestParam(name = "idFuncionario") Long idFuncionario) {
-        var funcionario = funcionarioRepository.findById(idFuncionario);
-        if (funcionario == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(funcionario);
-        }
+    public ResponseEntity<Funcionario>buscarIdFuncionario( @RequestParam(name = "idFuncionario") Long idFuncionario) {
+        Funcionario funcionario = funcionarioService.buscarPorID(idFuncionario);
         return ResponseEntity.status(HttpStatus.OK).body(funcionario);
     }
 
     @GetMapping
-    public ResponseEntity<Optional<Funcionario>> buscarCrachaFuncionario(
-            @RequestParam(name = "crachaFuncionario") String crachaFuncionario) {
-        var funcionario = funcionarioRepository.findByCracha(crachaFuncionario);
-        if (funcionario == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(funcionario);
-        }
+    public ResponseEntity<Funcionario> buscarCrachaFuncionario( @RequestParam(name = "crachaFuncionario") String crachaFuncionario) {
+        Funcionario funcionario = funcionarioService.buscarPorCracha(crachaFuncionario);
         return ResponseEntity.status(HttpStatus.OK).body(funcionario);
     }
 

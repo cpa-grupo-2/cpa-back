@@ -3,6 +3,7 @@ package com.biopark.cpa.services.pessoas;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -184,7 +185,7 @@ public class FuncionarioService {
         if (optionalFuncionario.isPresent()) {
             return optionalFuncionario.get();
         } else {
-            throw new RuntimeException("Funcionário não encontrado!");
+            throw new NoSuchElementException("Funcionário não encontrado!");
 
         }
     }
@@ -196,7 +197,7 @@ public class FuncionarioService {
         if (optionalFuncionario.isPresent()) {
             return optionalFuncionario.get();
         } else {
-            throw new RuntimeException("Funcionário não encontrado!");
+            throw new NoSuchElementException("Funcionário não encontrado!");
         }
     }
 
@@ -204,7 +205,7 @@ public class FuncionarioService {
     public List<Funcionario> buscarTodosFuncionarios() {
         var funcionario = funcionarioRepository.findAll();
         if (funcionario.isEmpty()) {
-            throw new RuntimeException("Não há professores cadastradas!");
+            throw new NoSuchElementException("Não há professores cadastradas!");
         }
         return funcionario;
     }

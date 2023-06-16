@@ -182,7 +182,7 @@ public class CursoService {
     public List<Curso> buscarTodosCursos() {
         var cursos = cursoRepository.findAll();
         if (cursos.isEmpty()) {
-            throw new RuntimeException("Não há cursos cadastrados!");
+            throw new NoSuchElementException("Não há cursos cadastrados!");
         }
         return cursos;
     }
@@ -211,9 +211,7 @@ public class CursoService {
             Curso curso = cursoDB.get();
             cursoRepository.delete(curso);
             return GenericDTO.builder().status(HttpStatus.OK)
-                    // Está sendo passando o get pelo codigo curso, pois, não tem a coluna nome
-                    // ainda no banco.
-                    .mensagem("Curso " + curso.getCodCurso() + " excluído com sucesso")
+                    .mensagem("Curso " + curso.getNomeCurso() + " excluído com sucesso")
                     .build();
         } catch (EmptyResultDataAccessException e) {
             return GenericDTO.builder().status(HttpStatus.NOT_FOUND)

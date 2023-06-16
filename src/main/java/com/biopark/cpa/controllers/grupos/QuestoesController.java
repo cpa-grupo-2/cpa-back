@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.biopark.cpa.dto.GenericDTO;
-import com.biopark.cpa.dto.MembroCPADTO;
 import com.biopark.cpa.entities.grupos.Questoes;
+import com.biopark.cpa.form.pessoas.CadastroCPA;
 import com.biopark.cpa.repository.grupo.QuestoesRepository;
 import com.biopark.cpa.services.grupos.QuestoesService;
 
@@ -30,8 +30,9 @@ public class QuestoesController {
         GenericDTO response = questoesService.cadastrarQuestoes(questao);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
-
     
+
+
     //Buscar questão por descrição
     @GetMapping
     public ResponseEntity<Questoes> buscarQuestaoPorDescricao(@RequestParam(name = "descricao") String descricaoQuestao) {
@@ -39,6 +40,7 @@ public class QuestoesController {
         return ResponseEntity.status(HttpStatus.OK).body(questao);
     }
 
+    //Buscar  todas as questões
     @GetMapping("/questoes")
     public ResponseEntity<List<Questoes>> buscarTodasQuestoes() {
         var questoes = questoesRepository.findAll();

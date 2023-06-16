@@ -45,12 +45,8 @@ public class InstituicaoController {
     }
 
     @GetMapping
-    public ResponseEntity<Optional<Instituicao>> buscarCodigoInstituicao(
-            @RequestParam(name = "codigoInstituicao") String codigoInstituicao) {
-        var instituicao = instituicaoRepository.findByCodigoInstituicao(codigoInstituicao);
-        if (instituicao == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(instituicao);
-        }
+    public ResponseEntity<Instituicao> buscarCodigoInstituicao( @RequestParam(name = "codigoInstituicao") String codigoInstituicao) {
+        Instituicao instituicao = instituicaoService.buscarPorCodigo(codigoInstituicao);
         return ResponseEntity.status(HttpStatus.OK).body(instituicao);
     }
 

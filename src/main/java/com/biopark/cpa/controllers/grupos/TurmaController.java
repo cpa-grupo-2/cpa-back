@@ -43,11 +43,8 @@ public class TurmaController {
     }
 
     @GetMapping
-    public ResponseEntity<Optional<Turma>> buscarCodigoTurma(@RequestParam(name = "codigoTurma") String codigoTurma) {
-        var turma = turmaRepository.findByCodTurma(codigoTurma);
-        if (turma == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(turma);
-        }
+    public ResponseEntity<Turma>buscarCodigoTurma(@RequestParam(name = "codigoTurma") String codigoTurma) {
+        Turma turma = turmaService.buscarPorCodigo(codigoTurma);
         return ResponseEntity.status(HttpStatus.OK).body(turma); 
     }
 

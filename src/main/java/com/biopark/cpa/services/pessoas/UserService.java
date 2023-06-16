@@ -46,14 +46,14 @@ public class UserService {
         if (optionalUser.isPresent()) {
             return optionalUser.get();
         } else {
-            throw new RuntimeException("Usuário não encontrado!");
+            throw new NoSuchElementException("Usuário não encontrado!");
         }
     }
 
     public List<User> buscarTodos() {
         List<User> users = userRepository.findAll();
         if (users.isEmpty()) {
-            throw new RuntimeException("Não há usuários cadastrados!");
+            throw new NoSuchElementException("Não há usuários cadastrados!");
         }
         return users;
     }

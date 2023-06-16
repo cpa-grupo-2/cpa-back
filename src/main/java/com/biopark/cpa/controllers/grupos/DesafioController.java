@@ -45,12 +45,9 @@ public class DesafioController {
 
     //Buscar apenas um desafio apssando o nomeDesafio como paramêtro.
     @GetMapping
-    public ResponseEntity<Optional<Desafio>> buscarNomeDesafio(@RequestParam(name = "nomeDesafio") String nomeDesafio) {
+    public ResponseEntity<Desafio> buscarNomeDesafio(@RequestParam(name = "nomeDesafio") String nomeDesafio) {
         nomeDesafio = nomeDesafio.toLowerCase();
-        var desafio = desafioRepository.findByNomeDesafio(nomeDesafio);
-        if (desafio == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(desafio);
-        }
+        Desafio desafio = desafioService.buscarPorNome(nomeDesafio);
         return ResponseEntity.status(HttpStatus.OK).body(desafio);
     }
 
