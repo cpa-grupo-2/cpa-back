@@ -2,13 +2,13 @@ package com.biopark.cpa.services.utils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
@@ -19,6 +19,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class EmailService {
+    @Value("${cors.originFront}")
+    private String URL;
+
     private final JavaMailSender mailSender;
 
     @Value("${spring.mail.username}")
@@ -35,10 +38,11 @@ public class EmailService {
 
     @Async
     public void montaEmail(String token, String email, String nome) throws IOException, MessagingException{
-        byte[] bytes = Files.readAllBytes(Paths.get("src/main/resources/view/templateEmail.html"));
+        ClassPathResource resource = new ClassPathResource("view/templateEmail.html");
+        byte[] bytes = StreamUtils.copyToByteArray(resource.getInputStream());
         String htmlTemplate = new String(bytes, StandardCharsets.UTF_8);
         htmlTemplate = htmlTemplate.replace("${name}", nome);
-        htmlTemplate = htmlTemplate.replace("${linkRedefinirSenha}", "http://localhost:3000/resetar-senha?token=" + token);
+        htmlTemplate = htmlTemplate.replace("${linkRedefinirSenha}", URL+"/resetar-senha?token=" + token);
 
         sendEmail(htmlTemplate, email);
     }

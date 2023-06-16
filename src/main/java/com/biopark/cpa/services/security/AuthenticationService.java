@@ -24,7 +24,7 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class AuthenticationService {
-    
+
     private final UserRepository repository;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -33,11 +33,11 @@ public class AuthenticationService {
     private final EmailService emailService;
 
     public AuthenticationResponse authenticate(LoginRequest request) {
-        try{
+        try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getEmail(), request.getPassword()));
-        }catch(Exception e){
+        } catch (Exception e) {
             return AuthenticationResponse.builder().token(null).status(HttpStatus.FORBIDDEN).level(null).build();
         }
 
@@ -52,16 +52,16 @@ public class AuthenticationService {
         return AuthenticationResponse.builder().token(jwtToken).status(HttpStatus.OK).level(level).build();
     }
 
-    public AuthenticationResponse authenticate(String token){
+    public AuthenticationResponse authenticate(String token) {
         token = token.substring(7);
         return AuthenticationResponse.builder().token(token).status(HttpStatus.OK).level(getLevelAccess(token)).build();
     }
 
-    private String getLevelAccess(String token){
+    private String getLevelAccess(String token) {
         return jwtService.extractUserLevel(token);
     }
 
-    public Boolean logout(String token){
+    public Boolean logout(String token) {
         token = token.substring(7);
         var expirationTime = jwtService.extractExpiration(token);
         BlackListToken tokenObj = BlackListToken.builder().token(token).dateExpiration(expirationTime).build();
@@ -71,22 +71,26 @@ public class AuthenticationService {
     }
 
     public GenericDTO recoverPassword(String email) throws IOException, MessagingException{
-        var userDB = repository.findByEmail(email);
-        
-        if (!userDB.isPresent()) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("Email informado não encontrado").build();
+        try{
+            var userDB = repository.findByEmail(email);
+            
+            if (!userDB.isPresent()) {
+                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("Email informado não encontrado").build();
+            }
+
+            User user = userDB.get();
+
+            String token = jwtService.generateTokenPassword(user);
+
+            emailService.montaEmail(token, email, user.getName());
+
+            return GenericDTO.builder().status(HttpStatus.OK).mensagem("Em alguns instantes cheque sua caixa de mensagem").build();
+        }catch(Exception e){
+            return GenericDTO.builder().status(HttpStatus.INTERNAL_SERVER_ERROR).mensagem("Erro: "+e.getMessage()).build();
         }
-
-        User user = userDB.get();
-
-        String token = jwtService.generateTokenPassword(user);
-
-        emailService.montaEmail(token, email, user.getName());
-
-        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Em alguns instantes cheque sua caixa de mensagem").build();
     }
 
-    public GenericDTO resetPassword(String password, String token){
+    public GenericDTO resetPassword(String password, String token) {
         if (!jwtService.isTokenValid(token)) {
             return GenericDTO.builder().status(HttpStatus.FORBIDDEN).mensagem("Token inválido ou expirado").build();
         }
@@ -95,7 +99,8 @@ public class AuthenticationService {
         var userDB = repository.findById(id);
 
         if (!userDB.isPresent()) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("Não conseguimos encontrar seu usuario").build();
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("Não conseguimos encontrar seu usuario")
+                    .build();
         }
 
         User user = userDB.get();
