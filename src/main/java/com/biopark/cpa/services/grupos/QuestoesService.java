@@ -7,6 +7,7 @@ import com.biopark.cpa.entities.grupos.Questoes;
 import com.biopark.cpa.repository.grupo.QuestoesRepository;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class QuestoesService {
@@ -15,26 +16,24 @@ public class QuestoesService {
    
     // Cadastrar Questão
     public GenericDTO cadastrarQuestoes(Questoes questoes) {
-        if ((questoesRepository.findByCodigoQuestao(questoes.getCodigoQuestao()).isPresent())) {
+        if ((questoesRepository.findByDescricao(questoes.getDescricao()).isPresent())) {
             return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Questão já cadastrada").build();
         }
-
         Questoes novaQuestao = Questoes.builder()
                 .descricao(questoes.getDescricao())
-                .titulo(questoes.getTitulo())
-                .resposta(questoes.getResposta())
+                .tipo(questoes.getTipo())
                 .build();
         questoesRepository.save(novaQuestao);
         return GenericDTO.builder().status(HttpStatus.OK).mensagem("Questão cadastrada com sucesso.").build();
     }
 
-    // Filtrar as questões por código
-    public Questoes buscarQuestaoPorCodigo(String codigoQuestao) {
-        var optionalQuestoes = questoesRepository.findByCodigoQuestao(codigoQuestao);
+    // Filtrar as questões por descricao
+    public Questoes buscarQuestaoPorDescricao(String descricaoQuestao) {
+        var optionalQuestoes = questoesRepository.findByDescricao(descricaoQuestao);
         if (optionalQuestoes.isPresent()) {
             return optionalQuestoes.get();
         } else {
-            throw new RuntimeException("Questão não encontrada!");
+            throw new NoSuchElementException("Questão não encontrada!");
         }
     }
 
@@ -46,5 +45,4 @@ public class QuestoesService {
         }
         return questoes;
     }
-
 }
