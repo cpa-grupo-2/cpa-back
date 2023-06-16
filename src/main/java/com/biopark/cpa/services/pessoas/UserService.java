@@ -1,6 +1,7 @@
-package com.biopark.cpa.services.grupos;
+package com.biopark.cpa.services.pessoas;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -22,12 +23,22 @@ public class UserService {
     public User buscarPorEmail(String email) {
         var optionalUser = userRepository.findByEmail(email);
 
-        if (optionalUser.isPresent()) {
-            return optionalUser.get();
-        } else {
-            throw new RuntimeException("Usuário não encontrado!");
-        }
+        if (!optionalUser.isPresent()) {
+            throw new NoSuchElementException("Usuário não encontrado!");
+        } 
+        return optionalUser.get();
     }
+
+    public User buscarPorCpf(String cpf) {
+        var optionalUser = userRepository.findByCpf(cpf);
+
+        if (!optionalUser.isPresent()) {
+            throw new NoSuchElementException("Usuário não encontrado!");
+        } 
+        return optionalUser.get();
+    }
+
+
 
     public User buscarPorId(Long id) {
         var optionalUser = userRepository.findById(id);

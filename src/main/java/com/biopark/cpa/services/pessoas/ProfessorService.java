@@ -3,6 +3,7 @@ package com.biopark.cpa.services.pessoas;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ProfessorService {
 
+    private final UserService userService;
     private final CsvParserService csvParserService;
     private final UserRepository userRepository;
     private final ProfessorRepository professorRepository;
@@ -96,7 +98,7 @@ public class ProfessorService {
 
             userRepository.upsert(user);
 
-            user = userRepository.findByCpf(user.getCpf()).get();
+            user = userService.buscarPorCpf(professorModel.getCpf());
 
             professorRepository.upsert(
                     Professor.builder().cracha(professorModel.getCracha())
@@ -159,10 +161,12 @@ public class ProfessorService {
                 continue;
             }
 
-            if (userRepository.findByEmail(professor.getEmail()).isPresent()
-                    | userRepository.findByCpf(professor.getCpf()).isPresent()
-                    | professorRepository.findByCracha(professor.getCracha()).isPresent()) {
-                erroValidations.add(ErroValidation.builder().linha(linha).mensagem("Professor já cadastrado").build());
+            try {
+                userService.buscarPorEmail(professor.getEmail());
+                userService.buscarPorCpf(professor.getCpf());
+                buscarPorCracha(professor.getCracha());
+                erroValidations.add(ErroValidation.builder().linha(linha).mensagem("Professor já cadastrado").build());    
+            } catch (NoSuchElementException e) {
             }
         }
 
@@ -173,17 +177,16 @@ public class ProfessorService {
                 .build();
     }
 
-    // Filtrar Professor por crachá
+    //Filtrar por crachá
     public Professor buscarPorCracha(String cracha) {
-        var optionalProfessor = professorRepository.findByCracha(cracha);
+        var optional = professorRepository.findByCracha(cracha);
 
-        if (optionalProfessor.isPresent()) {
-            return optionalProfessor.get();
-        } else {
-            throw new RuntimeException("Professor não encontrado!");
+        if (!optional.isPresent()) {
+            throw new NoSuchElementException("Instituição não encontrada!");
         }
+        return optional.get();
     }
-
+    
     // Filtrar Professor por id
     public Professor buscarPorId(Long id) {
         var optionalProfessor = professorRepository.findById(id);
@@ -238,4 +241,6 @@ public class ProfessorService {
                     .build();
         }
     }
+
+
 }

@@ -1,9 +1,13 @@
 package com.biopark.cpa.entities.grupos;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.hibernate.annotations.ColumnTransformer;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import com.biopark.cpa.entities.pessoas.Professor;
 import com.opencsv.bean.CsvBindByName;
 
 import jakarta.persistence.Column;
@@ -33,11 +37,6 @@ public class Curso {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "codigo_curso", nullable = false, unique = true)
-    @NotBlank(message = "O campo codigo_curso não pode ser nulo")
-    @CsvBindByName(column = "codigo_curso")
-    private String codigoCurso;
     
     @Column(name = "nome_curso", nullable = false, unique = true)
     @NotBlank(message = "O campo nome não deve ser nulo")
@@ -58,8 +57,25 @@ public class Curso {
     @OneToMany(mappedBy = "curso")
     private List<Turma> turmas;
 
+    @ManyToOne
+    @JoinColumn(name = "coordenador_id")
+    private Professor professor;
+
     @Transient
     @NotBlank(message = "O campo cod insituicao não deve ser nulo")
     @CsvBindByName(column = "codigo instituicao")
     private String codInstituicao;
+
+    @Transient
+    @NotBlank(message = "O campo cracha coordenador não deve ser nulo")
+    @CsvBindByName(column = "coordenador")
+    private String crachaCoordenador;
+
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

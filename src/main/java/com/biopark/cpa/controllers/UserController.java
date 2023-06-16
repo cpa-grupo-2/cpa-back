@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.entities.user.User;
 import com.biopark.cpa.repository.pessoas.UserRepository;
-import com.biopark.cpa.services.grupos.UserService;
+import com.biopark.cpa.services.pessoas.UserService;
 
 import lombok.RequiredArgsConstructor;
 

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -50,9 +51,7 @@ public class InstituicaoService {
             return CadastroDTO.builder().status(HttpStatus.OK).erros(errors).warnings(warnings).build();
         }
 
-        for (Instituicao instituicao : instituicoes) {
-            instituicaoRepository.upsert(instituicao);
-        }
+        upsert(instituicoes);
 
         return CadastroDTO.builder().status(HttpStatus.OK).erros(errors).warnings(warnings).build();
     }
@@ -65,8 +64,9 @@ public class InstituicaoService {
         Map<String, Integer> uniqueCod = new HashMap<String, Integer>();
 
         int linha = 0;
-        for (Instituicao instituicao: instituicoes) {
-            linha ++;
+        for (Instituicao instituicao : instituicoes) {
+            instituicao.setCodigoInstituicao(instituicao.getCodigoInstituicao().toLowerCase());
+            linha++;
             if (!uniqueCod.containsKey(instituicao.getCodigoInstituicao())) {
                 uniqueCod.put(instituicao.getCodigoInstituicao(), linha);
                 unicos.add(instituicao);
@@ -79,7 +79,7 @@ public class InstituicaoService {
                 continue;
             }
 
-            if (instituicaoRepository.findByCodigoInstituicao(instituicao.getCodigoInstituicao().toLowerCase()).isPresent()) {
+            if (instituicaoRepository.findByCodigoInstituicao(instituicao.getCodigoInstituicao()).isPresent()) {
                 erroValidations
                         .add(ErroValidation.builder().linha(linha).mensagem("Instituição já cadastrada").build());
             }
@@ -89,23 +89,29 @@ public class InstituicaoService {
                 .build();
     }
 
-    public Instituicao buscarPorCodigo(String codigo) {
-        var optionalInstituicao = instituicaoRepository.findByCodigoInstituicao(codigo);
-
-        if (optionalInstituicao.isPresent()) {
-            return optionalInstituicao.get();
-        } else {
-            throw new RuntimeException("Instituição não encontrada!");
+    public void upsert(List<Instituicao> iter){
+        for (Instituicao instituicao : iter) {
+            instituicaoRepository.upsert(instituicao);
         }
     }
 
+    public Instituicao buscarPorCodigo(String codigo) {
+        var optionalInstituicao = instituicaoRepository.findByCodigoInstituicao(codigo.toLowerCase().strip());
+
+        if (!optionalInstituicao.isPresent()) {
+            throw new NoSuchElementException("Instituição não encontrada!");
+        }
+        return optionalInstituicao.get();
+    }
+
+    //TODO: verificar e refatorar as funções abaixo
     public List<Instituicao> buscarTodasInstituicoes() {
         var instituicoes = instituicaoRepository.findAll();
         if (instituicoes.isEmpty()) {
-        throw new RuntimeException("Não há instituições cadastradas!");
+            throw new RuntimeException("Não há instituições cadastradas!");
         }
         return instituicoes;
-        }
+    }
 
     public GenericDTO editarInstituicao(Instituicao instituicaoRequest) {
         try {

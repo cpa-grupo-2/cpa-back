@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -14,8 +15,11 @@ import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.dto.cadastroCsv.ErroValidation;
 import com.biopark.cpa.dto.cadastroCsv.ValidationModel;
 import com.biopark.cpa.entities.grupos.Curso;
+import com.biopark.cpa.entities.grupos.Instituicao;
+import com.biopark.cpa.entities.pessoas.Professor;
 import com.biopark.cpa.repository.grupo.CursoRepository;
-import com.biopark.cpa.repository.grupo.InstituicaoRepository;
+import com.biopark.cpa.repository.pessoas.ProfessorRepository;
+import com.biopark.cpa.services.pessoas.ProfessorService;
 import com.biopark.cpa.services.utils.CsvParserService;
 
 import jakarta.transaction.Transactional;
@@ -23,14 +27,15 @@ import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
-
 public class CursoService {
-    private final CursoRepository cursoRepository;
     private final CsvParserService csvParserService;
-    private final InstituicaoRepository instituicaoRepository;
+    private final InstituicaoService instituicaoService;
+    private final ProfessorService professorService;
+    private final CursoRepository cursoRepository;
+    private final ProfessorRepository professorRepository;
 
     @Transactional
-    public CadastroDTO cadastrarCurso(List<Curso> cursos, boolean update){
+    public CadastroDTO cadastrarCurso(List<Curso> cursos, boolean update) {
         List<ErroValidation> errors = csvParserService.validaEntrada(cursos);
         List<ErroValidation> warnings = new ArrayList<>();
 
@@ -38,7 +43,7 @@ public class CursoService {
             return CadastroDTO.builder().status(HttpStatus.BAD_REQUEST).erros(errors).warnings(warnings).build();
         }
 
-        ValidationModel<Curso> model = verificaInstituicao(cursos);
+        ValidationModel<Curso> model = verificaDependencias(cursos);
         List<ErroValidation> naoExiste = model.getErrors();
         cursos = model.getObjects();
 
@@ -51,10 +56,10 @@ public class CursoService {
             List<ErroValidation> duplicatas = model.getErrors();
             warnings = model.getWarnings();
             cursos = model.getObjects();
-    
+
             if (!duplicatas.isEmpty()) {
                 return CadastroDTO.builder().status(HttpStatus.CONFLICT).erros(duplicatas).warnings(warnings).build();
-            }      
+            }
 
             cursoRepository.saveAll(cursos);
             return CadastroDTO.builder().status(HttpStatus.OK).erros(errors).warnings(warnings).build();
@@ -63,7 +68,7 @@ public class CursoService {
         for (Curso curso : cursos) {
             cursoRepository.upsert(curso);
         }
-        
+
         return CadastroDTO.builder().status(HttpStatus.OK).erros(errors).warnings(warnings).build();
     }
 
@@ -77,12 +82,15 @@ public class CursoService {
         Map<String, Integer> uniqueNome = new HashMap<String, Integer>();
 
         int linha = 0;
-        for (Curso curso: cursos) {
-            linha ++;
+        for (Curso curso : cursos) {
+            curso.setCodCurso(curso.getCodCurso().toLowerCase());
+            curso.setNomeCurso(curso.getNomeCurso().toLowerCase());
+
+            linha++;
             if (!uniqueCod.containsKey(curso.getCodCurso())) {
                 uniqueCod.put(curso.getCodCurso(), linha);
                 unicosCod.add(curso);
-            }else {
+            } else {
                 warnings.add(ErroValidation.builder()
                         .linha(linha)
                         .mensagem("Esta linha foi ignorada pois o código já existe na linha: "
@@ -91,21 +99,24 @@ public class CursoService {
                 continue;
             }
 
-            if(!uniqueNome.containsKey(curso.getNomeCurso())){
+            if (!uniqueNome.containsKey(curso.getNomeCurso())) {
                 uniqueNome.put(curso.getNomeCurso(), linha);
                 unicosNome.add(curso);
-            }else{
+            } else {
                 warnings.add(ErroValidation.builder()
-                    .linha(linha)
-                    .mensagem("Esta linha foi ignorada pois o nome já existe na linha: "
-                        + uniqueNome.get(curso.getNomeCurso()))
-                    .build());
+                        .linha(linha)
+                        .mensagem("Esta linha foi ignorada pois o nome já existe na linha: "
+                                + uniqueNome.get(curso.getNomeCurso()))
+                        .build());
                 continue;
             }
 
-            if (cursoRepository.findByCodCurso(curso.getCodCurso()).isPresent() || cursoRepository.findByNomeCurso(curso.getNomeCurso()).isPresent()) {
+            try {
+                buscarCursoNome(curso.getNomeCurso());
+                buscarPorCodigo(curso.getCodCurso());
                 erroValidations.add(ErroValidation.builder().linha(linha).mensagem("Curso já cadastrado").build());
-            }            
+            } catch (NoSuchElementException e) {
+            }
         }
 
         List<Curso> unicos = unicosNome;
@@ -113,55 +124,77 @@ public class CursoService {
 
         return ValidationModel.<Curso>builder().errors(erroValidations).warnings(warnings).objects(unicos)
                 .build();
-    }   
+    }
 
-    private ValidationModel<Curso> verificaInstituicao(List<Curso> cursos){
+    private ValidationModel<Curso> verificaDependencias(List<Curso> cursos) {
         List<ErroValidation> erros = new ArrayList<>();
 
         int linha = 0;
-        for (Curso curso: cursos) {
-            linha ++;
-            var instituicaoFind = instituicaoRepository.findByCodigoInstituicao(curso.getCodInstituicao().toLowerCase()); 
-            if (!instituicaoFind.isPresent()) {
-                erros.add(  
-                    ErroValidation.builder()
-                        .linha(linha)
-                        .mensagem("A instituição ligada a este curso não está cadastrada")
-                        .build()
-                );
-            }else{
-                curso.setInstituicao(instituicaoFind.get());
+        for (Curso curso : cursos) {
+            linha++;
+
+            try {
+                Instituicao instituicao = instituicaoService.buscarPorCodigo(curso.getCodInstituicao());
+                curso.setInstituicao(instituicao);
+            } catch (NoSuchElementException e) {
+                erros.add(
+                        ErroValidation.builder()
+                                .linha(linha)
+                                .mensagem("A instituição ligada a este curso não está cadastrada")
+                                .build());
             }
+
+            try {
+                Professor coordenador = professorService.buscarPorCracha(curso.getCrachaCoordenador());
+                coordenador.setCoordenador(true);
+                professorRepository.save(coordenador);
+                curso.setProfessor(coordenador);
+            } catch (Exception e) {
+                erros.add(
+                        ErroValidation.builder()
+                                .linha(linha)
+                                .mensagem("O coordenador ligado a este curso não está cadastrado")
+                                .build());
+            }
+
         }
         return ValidationModel.<Curso>builder().errors(erros).objects(cursos).build();
     }
 
-    // Filtrar Curso por ID
     public Curso buscarPorCodigo(String codigo) {
-        var optionalCurso = cursoRepository.findByCodCurso(codigo);
-        if (optionalCurso.isPresent()) {
-            return optionalCurso.get();
-        } else {
-            throw new RuntimeException("Curso não encontrado!");
+        var optionalCurso = cursoRepository.findByCodCurso(codigo.toLowerCase());
+        if (!optionalCurso.isPresent()) {
+            throw new NoSuchElementException("Curso não encontrado!");
         }
+        return optionalCurso.get();
     }
 
+    public Curso buscarCursoNome(String nome){
+        var optionalCurso = cursoRepository.findByNomeCurso(nome.toLowerCase());
+        if (!optionalCurso.isPresent()) {
+            throw new NoSuchElementException("Curso não encontrado!");
+        }
+        return optionalCurso.get();
+    }
+
+
+    // TODO: checar e refatorar os metodos abaixo
     public List<Curso> buscarTodosCursos() {
         var cursos = cursoRepository.findAll();
         if (cursos.isEmpty()) {
-        throw new RuntimeException("Não há cursos cadastrados!");
+            throw new RuntimeException("Não há cursos cadastrados!");
         }
         return cursos;
-        }
+    }
 
     // Editar Curso por ID
     public GenericDTO editarCurso(Curso cursoRequest) {
         try {
-            Curso curso = buscarPorCodigo(cursoRequest.getCodigoCurso());
+            Curso curso = buscarPorCodigo(cursoRequest.getCodCurso());
             curso.setNomeCurso(cursoRequest.getNomeCurso());
             cursoRepository.save(curso);
             return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Curso " + cursoRequest.getCodigoCurso() + " editado com sucesso")
+                    .mensagem("Curso " + cursoRequest.getCodCurso() + " editado com sucesso")
                     .build();
         } catch (Exception e) {
             return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
@@ -178,8 +211,9 @@ public class CursoService {
             Curso curso = cursoDB.get();
             cursoRepository.delete(curso);
             return GenericDTO.builder().status(HttpStatus.OK)
-                    // Está sendo passando o get pelo codigo curso, pois, não tem a coluna nome ainda no banco.
-                    .mensagem("Curso " + curso.getCodigoCurso() + " excluído com sucesso")
+                    // Está sendo passando o get pelo codigo curso, pois, não tem a coluna nome
+                    // ainda no banco.
+                    .mensagem("Curso " + curso.getCodCurso() + " excluído com sucesso")
                     .build();
         } catch (EmptyResultDataAccessException e) {
             return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
