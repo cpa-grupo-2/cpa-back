@@ -13,7 +13,7 @@ import java.util.NoSuchElementException;
 public class QuestoesService {
     private QuestoesRepository questoesRepository;
 
-   
+    
     // Cadastrar Questão
     public GenericDTO cadastrarQuestoes(Questoes questoes) {
         if ((questoesRepository.findByDescricao(questoes.getDescricao()).isPresent())) {
@@ -26,6 +26,7 @@ public class QuestoesService {
         questoesRepository.save(novaQuestao);
         return GenericDTO.builder().status(HttpStatus.OK).mensagem("Questão cadastrada com sucesso.").build();
     }
+    
 
     // Filtrar as questões por descricao
     public Questoes buscarQuestaoPorDescricao(String descricaoQuestao) {
@@ -36,6 +37,7 @@ public class QuestoesService {
             throw new NoSuchElementException("Questão não encontrada!");
         }
     }
+    
 
     // Filtrar todas as questões
     public List<Questoes> buscarTodasQuestoes() {

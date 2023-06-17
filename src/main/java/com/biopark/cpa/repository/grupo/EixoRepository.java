@@ -5,9 +5,10 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.biopark.cpa.entities.grupos.Questoes;
+import com.biopark.cpa.entities.grupos.Eixo;
 
 @Repository
-public interface QuestoesRepository extends JpaRepository<Questoes, Long> {
-    Optional<Questoes> findByDescricao(String decricao);
+public interface EixoRepository extends JpaRepository<Eixo, Long> {
+    Optional<Eixo> findByNomeEixo(String eixo);
 }
+

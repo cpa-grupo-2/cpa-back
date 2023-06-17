@@ -55,7 +55,7 @@ public class ProfessorController {
         return ResponseEntity.status(HttpStatus.OK).body(professor);
     }
 
-    @GetMapping
+    @GetMapping("/buscarCracha")
     public ResponseEntity<Optional<Professor>> buscarCrachaProfessor(
             @RequestParam(name = "crachaProfessor") String crachaProfessor) {
         var professor = professorRepository.findByCracha(crachaProfessor);

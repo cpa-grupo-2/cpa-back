@@ -1,7 +1,6 @@
 package com.biopark.cpa.controllers.grupos;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,24 +13,24 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.entities.grupos.Questoes;
-import com.biopark.cpa.form.pessoas.CadastroCPA;
 import com.biopark.cpa.repository.grupo.QuestoesRepository;
 import com.biopark.cpa.services.grupos.QuestoesService;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("api/questao")
 public class QuestoesController {
 
-    private QuestoesService questoesService;
-    private QuestoesRepository questoesRepository;
+    private final QuestoesService questoesService;
+    private final QuestoesRepository questoesRepository;
 
     @PostMapping
     public ResponseEntity<GenericDTO> cadastrarQuestao(@RequestBody Questoes questao) {
         GenericDTO response = questoesService.cadastrarQuestoes(questao);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
-    
-
 
     //Buscar questão por descrição
     @GetMapping
@@ -43,7 +42,7 @@ public class QuestoesController {
     //Buscar  todas as questões
     @GetMapping("/questoes")
     public ResponseEntity<List<Questoes>> buscarTodasQuestoes() {
-        var questoes = questoesRepository.findAll();
+        List<Questoes> questoes = questoesRepository.findAll();
         if (questoes.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(questoes);
         }

@@ -18,10 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.dto.MembroCPADTO;
-// import com.biopark.cpa.entities.pessoas.MembrosCPA;
 import com.biopark.cpa.entities.user.User;
 import com.biopark.cpa.form.pessoas.CadastroCPA;
-// import com.biopark.cpa.repository.pessoas.MembrosCPARepository;
 import com.biopark.cpa.services.pessoas.MembrosCPAService;
 
 import lombok.RequiredArgsConstructor;
@@ -39,7 +37,6 @@ public class MembroCPAController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    
     @GetMapping
     public ResponseEntity<MembroCPADTO> buscarPorId (@RequestParam(name = "id") Long id) {
             MembroCPADTO membroCPA = membrosCPAService.buscarPorID(id);

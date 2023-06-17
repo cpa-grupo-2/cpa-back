@@ -2,7 +2,6 @@ package com.biopark.cpa.controllers.pessoas;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +49,7 @@ public class FuncionarioController {
         return ResponseEntity.status(HttpStatus.OK).body(funcionario);
     }
 
-    @GetMapping
+    @GetMapping("/buscarCracha")
     public ResponseEntity<Funcionario> buscarCrachaFuncionario( @RequestParam(name = "crachaFuncionario") String crachaFuncionario) {
         Funcionario funcionario = funcionarioService.buscarPorCracha(crachaFuncionario);
         return ResponseEntity.status(HttpStatus.OK).body(funcionario);
