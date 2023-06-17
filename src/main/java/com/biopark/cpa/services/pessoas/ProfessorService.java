@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.dto.cadastroCsv.ErroValidation;
 import com.biopark.cpa.dto.cadastroCsv.ValidationModel;
+import com.biopark.cpa.dto.pessoas.ProfessorDTO;
 import com.biopark.cpa.entities.pessoas.Professor;
 import com.biopark.cpa.entities.user.User;
 import com.biopark.cpa.entities.user.enums.Level;
@@ -184,4 +185,28 @@ public class ProfessorService {
         return optional.get();
     }
 
+    public List<ProfessorDTO> listarTodos(){
+        List<Professor> professores = professorRepository.findAll();
+
+        if (professores.isEmpty()) {
+            throw new NoSuchElementException("Não há professores cadastrados");
+        }
+
+        List<ProfessorDTO> professoresDTO = new ArrayList<>();
+
+        for (Professor professor : professores) {
+            professoresDTO.add(
+                ProfessorDTO.builder()
+                    .id(professor.getId())
+                    .cpf(professor.getUser().getCpf())
+                    .cracha(professor.getCracha())
+                    .email(professor.getUser().getEmail())
+                    .name(professor.getUser().getName())
+                    .telefone(professor.getUser().getTelefone())
+                    .build()
+            );
+        }
+
+        return professoresDTO;
+    }
 }
