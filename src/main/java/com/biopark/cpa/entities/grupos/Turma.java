@@ -7,6 +7,7 @@ import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.opencsv.bean.CsvBindByName;
 
 import jakarta.persistence.Column;
@@ -57,6 +58,7 @@ public class Turma {
     @Min(value = 1, message = "o menor semestre deve ser 1")
     private int semestre;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "curso_id")
     private Curso curso;
