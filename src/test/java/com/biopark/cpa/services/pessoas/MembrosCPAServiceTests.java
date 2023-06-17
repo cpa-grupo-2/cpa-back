@@ -1,0 +1,71 @@
+package com.biopark.cpa.services.pessoas;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+
+import com.biopark.cpa.dto.GenericDTO;
+import com.biopark.cpa.form.pessoas.CadastroCPA;
+import com.biopark.cpa.repository.pessoas.UserRepository;
+
+@SpringBootTest
+public class MembrosCPAServiceTests {
+    @Autowired
+    private MembrosCPAService membrosCPAService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    void cadastrarCPA() {
+        CadastroCPA cadastroInvalido = CadastroCPA.builder()
+                .cpf("11111111111")
+                .email("dkasjldjalljkla.com")
+                .name(null)
+                .telefone("")
+                .build();
+
+        CadastroCPA cadastroCPA = CadastroCPA.builder()
+                .cpf("111.111.111-11")
+                .email("djkahdk@gmail.com")
+                .name("testeCPA")
+                .telefone("44 998034568")
+                .build();
+
+        GenericDTO saidaInvalida = membrosCPAService.cadastrarCPA(cadastroInvalido);
+        GenericDTO saidaCorreta = membrosCPAService.cadastrarCPA(cadastroCPA);
+        GenericDTO saidaCorretaEsperada = GenericDTO.builder()
+                .status(HttpStatus.OK)
+                .mensagem("Usuário cadastrado com sucesso.")
+                .build();
+
+        cadastroCPA.setCpf("222.222.222-22");
+        GenericDTO saidaDuplicataEmail = membrosCPAService.cadastrarCPA(cadastroCPA);
+
+        cadastroCPA.setCpf("111.111.111-11");
+        cadastroCPA.setEmail("teste@gmail.com");
+        GenericDTO saidaDuplicataCpf = membrosCPAService.cadastrarCPA(cadastroCPA);
+
+        GenericDTO saidaDuplicataEsperada = GenericDTO.builder()
+                .status(HttpStatus.CONFLICT)
+                .mensagem("Usuario já cadastrado")
+                .build();
+
+        var user = userRepository.findByCpf("111.111.111-11");
+
+        assertAll("Erro ao cadastrar membro CPA",
+            () -> assertNotEquals(null, saidaInvalida.getMensagem(), "Erro ao checar erros na entrada"),
+            () -> assertEquals(HttpStatus.BAD_REQUEST, saidaInvalida.getStatus(), "Erro ao checar erros na entrada"),
+            () -> assertEquals(saidaCorretaEsperada, saidaCorreta, "Erro na saida ao cadastrar corretamente"),
+            () -> assertEquals(saidaDuplicataEsperada, saidaDuplicataEmail, "permitiu email duplicado"),
+            () -> assertEquals(saidaDuplicataEsperada, saidaDuplicataCpf, "permitiu cpf duplicado"),
+            () -> assertEquals(true, user.isPresent(), "usuario não cadastrado")
+        );
+        
+    }
+}
