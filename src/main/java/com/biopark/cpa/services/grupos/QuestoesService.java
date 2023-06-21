@@ -6,26 +6,44 @@ import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.entities.grupos.Questoes;
 import com.biopark.cpa.repository.grupo.QuestoesRepository;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import lombok.RequiredArgsConstructor;
+
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class QuestoesService {
-    private QuestoesRepository questoesRepository;
+    private final QuestoesRepository questoesRepository;
+    private final Validator validator;
 
-    
     // Cadastrar Questão
     public GenericDTO cadastrarQuestoes(Questoes questoes) {
-        if ((questoesRepository.findByDescricao(questoes.getDescricao()).isPresent())) {
-            return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Questão já cadastrada").build();
+    Set<ConstraintViolation<Questoes>> violacoes = validator.validate(questoes);
+
+    if (!violacoes.isEmpty()) {
+        String mensagem = "";
+        for (ConstraintViolation<Questoes> violacao : violacoes) {
+            mensagem += violacao.getMessage() + "; ";
         }
-        Questoes novaQuestao = Questoes.builder()
-                .descricao(questoes.getDescricao())
-                .tipo(questoes.getTipo())
-                .build();
-        questoesRepository.save(novaQuestao);
-        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Questão cadastrada com sucesso.").build();
+        return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem(mensagem).build();
     }
+
+    if (questoesRepository.findByDescricao(questoes.getDescricao()).isPresent()) {
+        return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Questão já cadastrada").build();
+    }
+    Questoes novaQuestao = Questoes.builder()
+            .descricao(questoes.getDescricao())
+            .tipo(questoes.getTipo())
+            .build();
+
+    questoesRepository.save(novaQuestao);
+    return GenericDTO.builder().status(HttpStatus.OK).mensagem("Questão cadastrada com sucesso.").build();
+}
+
     
 
     // Filtrar as questões por descricao

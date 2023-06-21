@@ -31,7 +31,7 @@ public class QuestoesController {
         GenericDTO response = questoesService.cadastrarQuestoes(questao);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
-
+    
     //Buscar questão por descrição
     @GetMapping
     public ResponseEntity<Questoes> buscarQuestaoPorDescricao(@RequestParam(name = "descricao") String descricaoQuestao) {

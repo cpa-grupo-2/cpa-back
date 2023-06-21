@@ -186,7 +186,6 @@ public class FuncionarioService {
             return optionalFuncionario.get();
         } else {
             throw new NoSuchElementException("Funcionário não encontrado!");
-
         }
     }
 
