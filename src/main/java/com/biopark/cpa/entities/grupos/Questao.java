@@ -26,8 +26,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "questoes")
-public class Questoes {
+@Table(name = "questao")
+public class Questao {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

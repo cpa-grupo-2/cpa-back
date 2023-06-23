@@ -65,6 +65,7 @@ public class EixoService {
         return eixos;
     }
 
+    
     //Editar eixo
     public GenericDTO editarEixo(Eixo eixoRequest) {
         try {
@@ -85,7 +86,7 @@ public class EixoService {
         try {
             var eixoDB = eixoRepository.findById(id);
             if (!eixoDB.isPresent()) {
-                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("eixo não encontrado").build();
+                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("Eixo não encontrado").build();
             }
             Eixo eixo = eixoDB.get();
             eixoRepository.delete(eixo);

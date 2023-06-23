@@ -31,7 +31,7 @@ public class Eixo {
 
     @Column(nullable = false)
     @ColumnTransformer(write = "LOWER(?)")
-    @NotBlank(message = "O campo descrição não pode ser nulo")
+    @NotBlank(message = "O campo nome do eixo não pode ser nulo")
     private String nomeEixo;
 
     @Column(nullable = false)

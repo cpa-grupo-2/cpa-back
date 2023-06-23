@@ -68,7 +68,6 @@ public class DesafioController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-
     //Deletar um Desafio
     @DeleteMapping
     public ResponseEntity<GenericDTO> excluirDesafio(@RequestParam("id") int idRequest) {
