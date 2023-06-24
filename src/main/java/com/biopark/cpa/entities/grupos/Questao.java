@@ -14,6 +14,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -33,14 +35,19 @@ public class Questao {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    
+
     @Column(nullable = false)
     @NotBlank(message = "O campo descrição não pode ser nulo")
     private String descricao;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @NotBlank(message = "O tipo de questão não pode ser nulo")
     private TipoQuestao tipo;
+
+    @ManyToOne
+    @JoinColumn(name = "eixo_id")
+    private Eixo eixo;
 
     @CreationTimestamp
     @Column(name = "created_at")

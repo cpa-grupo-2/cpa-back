@@ -5,6 +5,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.entities.grupos.Questao;
+import com.biopark.cpa.entities.grupos.enums.TipoQuestao;
+import com.biopark.cpa.form.grupos.QuestaoModel;
+import com.biopark.cpa.repository.grupo.EixoRepository;
 import com.biopark.cpa.repository.grupo.QuestaoRepository;
 
 import jakarta.validation.ConstraintViolation;
@@ -20,25 +23,42 @@ import java.util.Set;
 public class QuestaoService {
     private final QuestaoRepository questaoRepository;
     private final Validator validator;
+    private final EixoRepository eixoRepository;
 
     // Cadastrar Questão
-    public GenericDTO cadastrarQuestoes(Questao questoes) {
-        Set<ConstraintViolation<Questao>> violacoes = validator.validate(questoes);
+    public GenericDTO cadastrarQuestoes(QuestaoModel questao) {
+        Set<ConstraintViolation<QuestaoModel>> violacoes = validator.validate(questao);
 
         if (!violacoes.isEmpty()) {
             String mensagem = "";
-            for (ConstraintViolation<Questao> violacao : violacoes) {
+            for (ConstraintViolation<QuestaoModel> violacao : violacoes) {
                 mensagem += violacao.getMessage() + "; ";
             }
             return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem(mensagem).build();
         }
 
-        if (questaoRepository.findByDescricao(questoes.getDescricao()).isPresent()) {
+        var eixo = eixoRepository.findById(questao.getEixoId());
+
+        if(!eixo.isPresent()) {
+           return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem("Eixo informado não encontrado!").build();
+        }
+
+        if (questaoRepository.findByDescricao(questao.getDescricao()).isPresent()) {
             return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Questão já cadastrada").build();
         }
+
+        TipoQuestao tipo;
+
+        try {
+            tipo = TipoQuestao.valueOf(questao.getTipo().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem("Tipo de questão inválido").build();
+        }
+
         Questao novaQuestao = Questao.builder()
-                .descricao(questoes.getDescricao())
-                .tipo(questoes.getTipo())
+                .descricao(questao.getDescricao())
+                .tipo(tipo)
+                .eixo(eixo.get())
                 .build();
 
         questaoRepository.save(novaQuestao);
@@ -46,8 +66,8 @@ public class QuestaoService {
     }
 
     // Filtrar as questões por descricao
-    public Questao buscarQuestaoPorDescricao(String descricaoQuestao) {
-        var optionalQuestoes = questaoRepository.findByDescricao(descricaoQuestao);
+    public Questao buscarQuestaoPorID(Long id) {
+        var optionalQuestoes = questaoRepository.findById(id);
         if (optionalQuestoes.isPresent()) {
             return optionalQuestoes.get();
         } else {
@@ -65,17 +85,28 @@ public class QuestaoService {
     }
 
     // Editar Questão
-    public GenericDTO editarQuestao(Questao questaoRequest) {
-        try {
-            Questao questao = buscarQuestaoPorDescricao(questaoRequest.getDescricao());
-            questao.setTipo(questaoRequest.getTipo());
-            questaoRepository.save(questao);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Questao " + questaoRequest.getDescricao() + " editada com sucesso")
-                    .build();
-        } catch (Exception e) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
+    public GenericDTO editarQuestao(QuestaoModel questaoRequest) {
+        if (questaoRequest.getId() == null) {
+            throw new IllegalArgumentException();
         }
+
+        TipoQuestao tipo;
+        try {
+            tipo = TipoQuestao.valueOf(questaoRequest.getTipo().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem("Tipo de questão inválido").build();
+        }
+
+        Questao questao = buscarQuestaoPorID(questaoRequest.getId());
+        questao.setTipo(tipo);
+        questao.setDescricao(questaoRequest.getDescricao());
+        
+
+
+        questaoRepository.save(questao);
+        return GenericDTO.builder().status(HttpStatus.OK)
+                .mensagem("Questao " + questaoRequest.getDescricao() + " editada com sucesso")
+                .build();
     }
 
     // Excluir Questão
