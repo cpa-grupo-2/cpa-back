@@ -177,16 +177,15 @@ public class CursoService {
         return optionalCurso.get();
     }
 
-
-    // TODO: checar e refatorar os metodos abaixo
     public List<Curso> buscarTodosCursos() {
-        var cursos = cursoRepository.findAll();
+        List<Curso> cursos = cursoRepository.findAll();
         if (cursos.isEmpty()) {
-            throw new RuntimeException("Não há cursos cadastrados!");
+            throw new NoSuchElementException("Não há cursos cadastrados!");
         }
         return cursos;
     }
-
+    
+    // TODO: checar e refatorar os metodos abaixo
     // Editar Curso por ID
     public GenericDTO editarCurso(Curso cursoRequest) {
         try {

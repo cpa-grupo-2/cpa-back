@@ -43,7 +43,7 @@ public class CursoController {
         return ResponseEntity.status(cadastroDTO.getStatus()).body(cadastroDTO);
     }
 
-    @GetMapping
+    @GetMapping("/codigo")
     public ResponseEntity<Optional<Curso>> buscarCodigoCurso(@RequestParam(name = "codCurso") String codigoCurso) {
         var curso = cursoRepository.findByCodCurso(codigoCurso);
         if (curso == null) {
@@ -52,12 +52,9 @@ public class CursoController {
         return ResponseEntity.status(HttpStatus.OK).body(curso);
     }
 
-    @GetMapping("/cursos")
+    @GetMapping()
     public ResponseEntity<List<Curso>> buscarTodosCursos() {
-        var cursos = cursoRepository.findAll();
-        if (cursos.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(cursos);
-        }
+        List<Curso> cursos = cursoService.buscarTodosCursos();
         return ResponseEntity.status(HttpStatus.OK).body(cursos);
     }
 
