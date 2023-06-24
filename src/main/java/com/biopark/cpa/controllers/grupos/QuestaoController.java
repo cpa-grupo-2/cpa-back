@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.entities.grupos.Questao;
+import com.biopark.cpa.form.grupos.QuestaoModel;
 import com.biopark.cpa.repository.grupo.QuestaoRepository;
 import com.biopark.cpa.services.grupos.QuestaoService;
 
@@ -30,15 +31,15 @@ public class QuestaoController {
 
     //Cadastrar Questão
     @PostMapping
-    public ResponseEntity<GenericDTO> cadastrarQuestao(@RequestBody Questao questao) {
+    public ResponseEntity<GenericDTO> cadastrarQuestao(@RequestBody QuestaoModel questao) {
         GenericDTO response = questaoService.cadastrarQuestoes(questao);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
     
-    //Buscar Questão por Descrição
+    //Buscar Questão por ID
     @GetMapping
-    public ResponseEntity<Questao> buscarQuestaoPorDescricao(@RequestParam(name = "descricao") String descricaoQuestao) {
-        Questao questao = questaoService.buscarQuestaoPorDescricao(descricaoQuestao);
+    public ResponseEntity<Questao> buscarQuestaoPorID(@RequestParam(name = "id") Long id) {
+        Questao questao = questaoService.buscarQuestaoPorID(id);
         return ResponseEntity.status(HttpStatus.OK).body(questao);
     }
 
@@ -54,7 +55,7 @@ public class QuestaoController {
 
      // Editar Questão
     @PutMapping
-    public ResponseEntity<GenericDTO> editarQuestao(@RequestBody Questao questao) {
+    public ResponseEntity<GenericDTO> editarQuestao(@RequestBody QuestaoModel questao) {
         GenericDTO response = questaoService.editarQuestao(questao);
         return ResponseEntity.status(response.getStatus()).body(response);
     }

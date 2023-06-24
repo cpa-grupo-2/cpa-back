@@ -47,8 +47,8 @@ public class EixoService {
     }
 
     // Filtrar eixo por nome
-    public Eixo buscarEixoPorNome(String nomeEixo) {
-        var optionalEixo = eixoRepository.findByNomeEixo(nomeEixo);
+    public Eixo buscarEixoPorID(Long id) {
+        var optionalEixo = eixoRepository.findById(id);
         if (optionalEixo.isPresent()) {
             return optionalEixo.get();
         } else {
@@ -69,12 +69,12 @@ public class EixoService {
     //Editar eixo
     public GenericDTO editarEixo(Eixo eixoRequest) {
         try {
-            Eixo eixo = buscarEixoPorNome(eixoRequest.getNomeEixo());
+            Eixo eixo = buscarEixoPorID(eixoRequest.getId());
             eixo.setNomeEixo(eixoRequest.getNomeEixo());
             eixo.setDescricao(eixoRequest.getDescricao());
             eixoRepository.save(eixo);
             return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Eixo " + eixoRequest.getNomeEixo() + " editado com sucesso")
+                    .mensagem("Eixo " + eixoRequest.getId() + " editado com sucesso")
                     .build();
         } catch (Exception e) {
             return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();

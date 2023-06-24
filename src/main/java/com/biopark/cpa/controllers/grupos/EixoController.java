@@ -23,8 +23,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("api/eixo")
 public class EixoController {
-    private EixoService eixoService;
-    private EixoRepository eixoRepository;
+    private final EixoService eixoService;
+    private final EixoRepository eixoRepository;
 
     @PostMapping
     public ResponseEntity<GenericDTO> cadastrarEixo(@RequestBody Eixo eixo) {
@@ -34,8 +34,8 @@ public class EixoController {
 
     // Buscar eixo por nome
     @GetMapping
-    public ResponseEntity<Eixo> buscarEixoPorNome(@RequestParam(name = "nomeEixo") String nomeEixo) {
-        Eixo eixo = eixoService.buscarEixoPorNome(nomeEixo);
+    public ResponseEntity<Eixo> buscarEixoPorID(@RequestParam(name = "id") Long id) {
+        Eixo eixo = eixoService.buscarEixoPorID(id);
         return ResponseEntity.status(HttpStatus.OK).body(eixo);
     }
 
