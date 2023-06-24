@@ -1,6 +1,7 @@
 package com.biopark.cpa.exceptions;
 
 import java.io.IOException;
+import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,7 +19,7 @@ import io.jsonwebtoken.MalformedJwtException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler({ MissingServletRequestPartException.class, MissingServletRequestParameterException.class })
+    @ExceptionHandler({ MissingServletRequestPartException.class, MissingServletRequestParameterException.class, IllegalArgumentException.class })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
     public ExceptionModel missingParams() {
@@ -64,5 +65,12 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ExceptionModel expiredToken(){
         return ExceptionModel.builder().status(HttpStatus.FORBIDDEN).mensagem("token inválido").build();
+    }
+
+    @ExceptionHandler({ NoSuchElementException.class })
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseBody
+    public ExceptionModel ElementNotFound(NoSuchElementException e) {
+        return ExceptionModel.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
     }
 }

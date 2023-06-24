@@ -2,7 +2,6 @@ package com.biopark.cpa.controllers.grupos;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,12 +44,9 @@ public class DesafioController {
 
     //Buscar apenas um desafio apssando o nomeDesafio como paramêtro.
     @GetMapping
-    public ResponseEntity<Optional<Desafio>> buscarNomeDesafio(@RequestParam(name = "nomeDesafio") String nomeDesafio) {
+    public ResponseEntity<Desafio> buscarNomeDesafio(@RequestParam(name = "nomeDesafio") String nomeDesafio) {
         nomeDesafio = nomeDesafio.toLowerCase();
-        var desafio = desafioRepository.findByNomeDesafio(nomeDesafio);
-        if (desafio == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(desafio);
-        }
+        Desafio desafio = desafioService.buscarPorNome(nomeDesafio);
         return ResponseEntity.status(HttpStatus.OK).body(desafio);
     }
 
@@ -70,7 +66,6 @@ public class DesafioController {
         GenericDTO response = desafioService.editarDesafio(desafio);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
-
 
     //Deletar um Desafio
     @DeleteMapping

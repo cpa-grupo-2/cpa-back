@@ -2,7 +2,6 @@ package com.biopark.cpa.controllers.grupos;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,11 +42,8 @@ public class TurmaController {
     }
 
     @GetMapping
-    public ResponseEntity<Optional<Turma>> buscarCodigoTurma(@RequestParam(name = "codigoTurma") String codigoTurma) {
-        var turma = turmaRepository.findByCodTurma(codigoTurma);
-        if (turma == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(turma);
-        }
+    public ResponseEntity<Turma>buscarCodigoTurma(@RequestParam(name = "codigoTurma") String codigoTurma) {
+        Turma turma = turmaService.buscarPorCodigo(codigoTurma);
         return ResponseEntity.status(HttpStatus.OK).body(turma); 
     }
 

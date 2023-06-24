@@ -3,7 +3,6 @@ package com.biopark.cpa.controllers.grupos;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,12 +42,9 @@ public class CursoController {
         return ResponseEntity.status(cadastroDTO.getStatus()).body(cadastroDTO);
     }
 
-    @GetMapping("/codigo")
-    public ResponseEntity<Optional<Curso>> buscarCodigoCurso(@RequestParam(name = "codCurso") String codigoCurso) {
-        var curso = cursoRepository.findByCodCurso(codigoCurso);
-        if (curso == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(curso);
-        }
+    @GetMapping
+    public ResponseEntity<Curso> buscarCodigoCurso(@RequestParam(name = "codCurso") String codigoCurso) {
+        Curso curso = cursoService.buscarPorCodigo(codigoCurso);
         return ResponseEntity.status(HttpStatus.OK).body(curso);
     }
 

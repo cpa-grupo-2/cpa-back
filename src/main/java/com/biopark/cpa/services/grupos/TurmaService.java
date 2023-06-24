@@ -125,12 +125,12 @@ public class TurmaService {
 
     public Turma buscarPorCodigo(String codigo) {
         var optionalTurma = turmaRepository.findByCodTurma(codigo.toLowerCase());
-
         if (!optionalTurma.isPresent()) {
             throw new NoSuchElementException("Turma não encontrada!");
         }
         return optionalTurma.get();
     }
+
 
     public Turma buscarPorId(Long id){
         var optional = turmaRepository.findById(id);
@@ -138,27 +138,25 @@ public class TurmaService {
         if (!optional.isPresent()) {
             throw new NoSuchElementException();
         }
-
         return optional.get();
     }
-
-
 
 
     public List<Turma> buscarTodasTurmas() {
         var turmas = turmaRepository.findAll();
         if (turmas.isEmpty()) {
-            throw new RuntimeException("Não há turmas cadastradas!");
+            throw new NoSuchElementException("Não há turmas cadastradas!");
         }
         return turmas;
     }
-    // Editar Turma por ID
+
+
+    // Editar Turma por Código
     public GenericDTO editarTurma(Turma turmaRequest) {
         try {
             Turma turma = buscarPorCodigo(turmaRequest.getCodTurma());
-            // esse set vai ser para quando tiver a coluna Nome Curso no banco.
-            // turma.setNomeTurma(turmaRequest.getNomeTurma());
-
+            turma.setNomeTurma(turmaRequest.getNomeTurma());
+            turma.setSemestre(turmaRequest.getSemestre());
             turmaRepository.save(turma);
             return GenericDTO.builder().status(HttpStatus.OK)
                     .mensagem("Turma " + turmaRequest.getCodTurma() + " editado com sucesso")
@@ -168,6 +166,7 @@ public class TurmaService {
         }
     }
 
+    
     // Excluir Turma
     public GenericDTO excluirTurma(Long id) {
         try {
@@ -188,4 +187,5 @@ public class TurmaService {
                     .build();
         }
     }
+    
 }

@@ -1,5 +1,6 @@
 package com.biopark.cpa.repository.pessoas;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,6 +17,7 @@ import jakarta.transaction.Transactional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     Optional<User> findByCpf(String cpf);
+    List<User> findAllByLevel(String level);
 
     @Modifying
     @Transactional

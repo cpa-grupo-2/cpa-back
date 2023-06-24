@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.dto.cadastroCsv.ErroValidation;
 import com.biopark.cpa.dto.cadastroCsv.ValidationModel;
@@ -78,7 +79,8 @@ public class AlunoService {
                         .level(Level.USER)
                         .build();
 
-                alunos.add(Aluno.builder().ra(alunoModel.getRa()).desafioTurmas(alunoModel.getDesafiosTurma()).user(user).build());
+                alunos.add(Aluno.builder().ra(alunoModel.getRa()).desafioTurmas(alunoModel.getDesafiosTurma())
+                        .user(user).build());
                 users.add(user);
             }
 
@@ -138,7 +140,7 @@ public class AlunoService {
         return ValidationModel.<AlunoModel>builder().errors(erros).objects(alunos).build();
     }
 
-    private ValidationModel<AlunoModel> checarDuplicatas(List<AlunoModel> models){
+    private ValidationModel<AlunoModel> checarDuplicatas(List<AlunoModel> models) {
         List<ErroValidation> erroValidations = new ArrayList<>();
         List<ErroValidation> warnings = new ArrayList<>();
         List<AlunoModel> unicosEmail = new ArrayList<>();
@@ -193,7 +195,7 @@ public class AlunoService {
                 userService.buscarPorCpf(aluno.getCpf());
                 userService.buscarPorEmail(aluno.getEmail());
                 buscarPorRa(aluno.getRa());
-                erroValidations.add(ErroValidation.builder().linha(linha).mensagem("Aluno já cadastrado").build());   
+                erroValidations.add(ErroValidation.builder().linha(linha).mensagem("Aluno já cadastrado").build());
             } catch (Exception e) {
             }
         }
@@ -205,16 +207,16 @@ public class AlunoService {
                 .build();
     }
 
-    public List<Aluno> buscarPorTurma(Long id){
+    public List<Aluno> buscarPorTurma(Long id) {
         return alunoRepository.findByDesafioTurmas_turma_id(id);
     }
 
-    public List<Aluno> listarAlunosTurma(Turma turma){
+    public List<Aluno> listarAlunosTurma(Turma turma) {
         List<Aluno> alunos = alunoRepository.findByDesafioTurmas_turma_id(turma.getId());
         return alunos;
     }
 
-    public Aluno buscarPorRa(String ra){
+    public Aluno buscarPorRa(String ra) {
         var optional = alunoRepository.findByra(ra.toLowerCase());
 
         if (!optional.isPresent()) {
@@ -222,5 +224,54 @@ public class AlunoService {
         }
 
         return optional.get();
+    }
+
+    // Buscar todos os Alunos
+    public List<Aluno> buscarTodosAlunos() {
+        var alunos = alunoRepository.findAll();
+        if (alunos.isEmpty()) {
+            throw new NoSuchElementException("Não há alunos cadastrados!");
+        }
+        return alunos;
+    }
+
+    // Editar Aluno
+    public GenericDTO editarAluno(AlunoModel alunoModel) {
+        try {
+            Aluno aluno = buscarPorRa(alunoModel.getRa());
+            User user = aluno.getUser();
+            user.setName(alunoModel.getName());
+            user.setTelefone(alunoModel.getTelefone());
+            user.setEmail(alunoModel.getEmail());
+            userRepository.save(user);
+            alunoRepository.save(aluno);
+            return GenericDTO.builder()
+                    .status(HttpStatus.OK)
+                    .mensagem("Aluno " + alunoModel.getRa() + " editado com sucesso!")
+                    .build();
+        } catch (NoSuchElementException e) {
+            return GenericDTO.builder()
+                    .status(HttpStatus.NOT_FOUND)
+                    .mensagem("Aluno não encontrado!")
+                    .build();
+        }
+    }
+
+    // Excluir Aluno
+    public GenericDTO excluirAluno(String ra) {
+        try {
+            Aluno aluno = buscarPorRa(ra);
+            User user = aluno.getUser();
+            alunoRepository.delete(aluno);
+            userRepository.delete(user);
+            return GenericDTO.builder().status(HttpStatus.OK)
+                    .mensagem("Aluno " + ra + " excluído com sucesso!")
+                    .build();
+        } catch (NoSuchElementException e) {
+            return GenericDTO.builder()
+                    .status(HttpStatus.NOT_FOUND)
+                    .mensagem("Aluno " + ra + " não encontrado!")
+                    .build();
+        }
     }
 }

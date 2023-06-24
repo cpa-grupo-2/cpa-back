@@ -3,10 +3,13 @@ package com.biopark.cpa.services.pessoas;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.dto.cadastroCsv.ErroValidation;
 import com.biopark.cpa.dto.cadastroCsv.ValidationModel;
@@ -174,4 +177,71 @@ public class FuncionarioService {
         return ValidationModel.<FuncionarioModel>builder().errors(erroValidations).warnings(warnings).objects(unicos)
                 .build();
     }
+
+    // Filtrar Funcionário por id
+    public Funcionario buscarPorID(Long id) {
+        var optionalFuncionario = funcionarioRepository.findById(id);
+
+        if (optionalFuncionario.isPresent()) {
+            return optionalFuncionario.get();
+        } else {
+            throw new NoSuchElementException("Funcionário não encontrado!");
+        }
+    }
+
+    // Filtrar Funcionário por crachá
+    public Funcionario buscarPorCracha(String cracha) {
+        var optionalFuncionario = funcionarioRepository.findByCracha(cracha);
+
+        if (optionalFuncionario.isPresent()) {
+            return optionalFuncionario.get();
+        } else {
+            throw new NoSuchElementException("Funcionário não encontrado!");
+        }
+    }
+
+    // Filtrar todos os Funcionários
+    public List<Funcionario> buscarTodosFuncionarios() {
+        var funcionario = funcionarioRepository.findAll();
+        if (funcionario.isEmpty()) {
+            throw new NoSuchElementException("Não há professores cadastradas!");
+        }
+        return funcionario;
+    }
+
+    // Editar Funcionário
+    public GenericDTO editarFuncionario(Funcionario funcionarioRequest) {
+        try {
+            Funcionario funcionario = buscarPorCracha(funcionarioRequest.getCracha());
+            funcionario.getUser().setName(funcionarioRequest.getUser().getName());
+            funcionario.getUser().setTelefone(funcionarioRequest.getUser().getTelefone());
+            funcionario.getUser().setEmail(funcionarioRequest.getUser().getEmail());
+            funcionarioRepository.save(funcionario);
+            return GenericDTO.builder().status(HttpStatus.OK)
+                    .mensagem("Funcionário " + funcionarioRequest.getCracha() + "editado com sucesso")
+                    .build();
+        } catch (Exception e) {
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
+        }
+    }
+
+    // Excluir Funcionário
+    public GenericDTO excluirFuncionario(Long id) {
+        try {
+            var funcionarioDB = funcionarioRepository.findById(id);
+            if (!funcionarioDB.isPresent()) {
+                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("funcionário não encontrado").build();
+            }
+            Funcionario funcionario = funcionarioDB.get();
+            funcionarioRepository.delete(funcionario);
+            return GenericDTO.builder().status(HttpStatus.OK)
+                    .mensagem("Funcionario " + funcionario.getId() + " excluído com sucesso")
+                    .build();
+        } catch (EmptyResultDataAccessException e) {
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
+                    .mensagem("Funcionario " + id + " não encontrado")
+                    .build();
+        }
+    }
 }
+

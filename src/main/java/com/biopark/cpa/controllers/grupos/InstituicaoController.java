@@ -2,8 +2,6 @@ package com.biopark.cpa.controllers.grupos;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,14 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
 import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.entities.grupos.Instituicao;
 import com.biopark.cpa.repository.grupo.InstituicaoRepository;
 import com.biopark.cpa.services.grupos.InstituicaoService;
 import com.biopark.cpa.services.utils.CsvParserService;
-
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -45,12 +41,8 @@ public class InstituicaoController {
     }
 
     @GetMapping
-    public ResponseEntity<Optional<Instituicao>> buscarCodigoInstituicao(
-            @RequestParam(name = "codigoInstituicao") String codigoInstituicao) {
-        var instituicao = instituicaoRepository.findByCodigoInstituicao(codigoInstituicao);
-        if (instituicao == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(instituicao);
-        }
+    public ResponseEntity<Instituicao> buscarCodigoInstituicao( @RequestParam(name = "codigoInstituicao") String codigoInstituicao) {
+        Instituicao instituicao = instituicaoService.buscarPorCodigo(codigoInstituicao);
         return ResponseEntity.status(HttpStatus.OK).body(instituicao);
     }
 
@@ -69,7 +61,6 @@ public class InstituicaoController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    // @DeleteMapping("/{id}")
     @DeleteMapping
     public ResponseEntity<GenericDTO> excluirInstituicao(@RequestParam("id") int idRequest) {
         Long id = Long.valueOf(idRequest);

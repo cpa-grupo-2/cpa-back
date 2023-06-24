@@ -5,9 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.dto.cadastroCsv.ErroValidation;
 import com.biopark.cpa.dto.cadastroCsv.ValidationModel;
@@ -176,6 +178,7 @@ public class ProfessorService {
                 .build();
     }
 
+    //Filtrar por crachá
     public Professor buscarPorCracha(String cracha) {
         var optional = professorRepository.findByCracha(cracha);
 
@@ -183,6 +186,17 @@ public class ProfessorService {
             throw new NoSuchElementException("Instituição não encontrada!");
         }
         return optional.get();
+    }
+    
+    // Filtrar Professor por id
+    public Professor buscarPorId(Long id) {
+        var optionalProfessor = professorRepository.findById(id);
+       
+        if (optionalProfessor.isPresent()) {
+            return optionalProfessor.get();
+        } else {
+            throw new NoSuchElementException("Professor não encontrado!");
+        }
     }
 
     public List<ProfessorDTO> listarTodos(){
@@ -208,5 +222,48 @@ public class ProfessorService {
         }
 
         return professoresDTO;
+    }
+
+    // Filtrar todos os professor
+    public List<Professor> buscarTodosProfessores() {
+        var professor = professorRepository.findAll();
+        if (professor.isEmpty()) {
+            throw new NoSuchElementException("Não há professores cadastradas!");
+        }
+        return professor;
+    }
+
+    // Editar Professor por crachá
+    public GenericDTO editarProfessor(Professor professorRequest) {
+        try {
+            Professor professor = buscarPorCracha(professorRequest.getCracha());
+            professor.getUser().setName(professorRequest.getUser().getName());
+            professor.getUser().setTelefone(professorRequest.getUser().getTelefone());
+            professor.getUser().setEmail(professorRequest.getUser().getEmail());
+            professorRepository.save(professor);
+            return GenericDTO.builder().status(HttpStatus.OK)
+                    .mensagem("Professor " + professorRequest.getCracha() + " editado com sucesso")
+                    .build();
+        } catch (Exception e) {
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
+        }
+    }
+    // Excluir Professor
+    public GenericDTO excluirProfessor(Long id) {
+        try {
+            var professorDB = professorRepository.findById(id);
+            if (!professorDB.isPresent()) {
+                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("professor não encontrada").build();
+            }
+            Professor professor = professorDB.get();
+            professorRepository.delete(professor);
+            return GenericDTO.builder().status(HttpStatus.OK)
+                    .mensagem("Professor " + professor.getId() + " excluído com sucesso")
+                    .build();
+        } catch (EmptyResultDataAccessException e) {
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
+                    .mensagem("Professor " + id + " não encontrado")
+                    .build();
+        }
     }
 }

@@ -190,9 +190,7 @@ public class CursoService {
     public GenericDTO editarCurso(Curso cursoRequest) {
         try {
             Curso curso = buscarPorCodigo(cursoRequest.getCodCurso());
-            // esse set vai ser para quando tiver a coluna Nome Curso no banco.
-            // curso.setNomeCurso(cursoRequest.getNomeCurso());
-
+            curso.setNomeCurso(cursoRequest.getNomeCurso());
             cursoRepository.save(curso);
             return GenericDTO.builder().status(HttpStatus.OK)
                     .mensagem("Curso " + cursoRequest.getCodCurso() + " editado com sucesso")
@@ -212,9 +210,7 @@ public class CursoService {
             Curso curso = cursoDB.get();
             cursoRepository.delete(curso);
             return GenericDTO.builder().status(HttpStatus.OK)
-                    // Está sendo passando o get pelo codigo curso, pois, não tem a coluna nome
-                    // ainda no banco.
-                    .mensagem("Curso " + curso.getCodCurso() + " excluído com sucesso")
+                    .mensagem("Curso " + curso.getNomeCurso() + " excluído com sucesso")
                     .build();
         } catch (EmptyResultDataAccessException e) {
             return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
