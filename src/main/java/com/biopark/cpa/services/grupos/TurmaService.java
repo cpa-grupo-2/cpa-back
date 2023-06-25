@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -14,10 +13,15 @@ import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.dto.cadastroCsv.ErroValidation;
 import com.biopark.cpa.dto.cadastroCsv.ValidationModel;
+import com.biopark.cpa.dto.grupos.DesafioDTO;
+import com.biopark.cpa.dto.grupos.TurmaDTO;
 import com.biopark.cpa.entities.grupos.Curso;
+import com.biopark.cpa.entities.grupos.Desafio;
 import com.biopark.cpa.entities.grupos.Turma;
+import com.biopark.cpa.form.grupos.TurmaModel;
 import com.biopark.cpa.repository.grupo.TurmaRepository;
 import com.biopark.cpa.services.utils.CsvParserService;
+import com.biopark.cpa.services.utils.ValidaEntities;
 
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -28,6 +32,7 @@ public class TurmaService {
     private final CsvParserService csvParserService;
     private final CursoService cursoService;
     private final TurmaRepository turmaRepository;
+    private final ValidaEntities validaEntities;
 
     @Transactional
     public CadastroDTO cadastrarTurma(List<Turma> turmas, boolean update) {
@@ -116,7 +121,7 @@ public class TurmaService {
                 erros.add(
                         ErroValidation.builder()
                                 .linha(linha)
-                                .mensagem("O curso ligado a esta turma não está cadastrada")
+                                .mensagem("O curso ligado a esta turma não está cadastrado")
                                 .build());
             }
         }
@@ -131,61 +136,89 @@ public class TurmaService {
         return optionalTurma.get();
     }
 
-
-    public Turma buscarPorId(Long id){
-        var optional = turmaRepository.findById(id);
-
-        if (!optional.isPresent()) {
-            throw new NoSuchElementException();
-        }
-        return optional.get();
-    }
-
-
-    public List<Turma> buscarTodasTurmas() {
-        var turmas = turmaRepository.findAll();
+    public List<TurmaDTO> buscarTodasTurmasDTO() {
+        List<Turma> turmas = turmaRepository.findAll();
         if (turmas.isEmpty()) {
             throw new NoSuchElementException("Não há turmas cadastradas!");
         }
-        return turmas;
-    }
 
+        List<TurmaDTO> response = new ArrayList<>();
 
-    // Editar Turma por Código
-    public GenericDTO editarTurma(Turma turmaRequest) {
-        try {
-            Turma turma = buscarPorCodigo(turmaRequest.getCodTurma());
-            turma.setNomeTurma(turmaRequest.getNomeTurma());
-            turma.setSemestre(turmaRequest.getSemestre());
-            turmaRepository.save(turma);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Turma " + turmaRequest.getCodTurma() + " editado com sucesso")
-                    .build();
-        } catch (Exception e) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
+        for (Turma turma : turmas) {
+            response.add(montaTurmaDTO(turma));
         }
+
+        return response;
     }
 
-    
-    // Excluir Turma
+    public TurmaDTO buscarPorCodigoDTO(String codigo){
+        var optionalTurma = turmaRepository.findByCodTurma(codigo.toLowerCase());
+        if (!optionalTurma.isPresent()) {
+            throw new NoSuchElementException("Turma não encontrada!");
+        }
+        return montaTurmaDTO(optionalTurma.get());
+    }
+
+    public List<TurmaDTO> buscarPorCodigoCursoDTO(String codigo){
+        List<Turma> turmas = turmaRepository.findAllByCursoCodCurso(codigo);
+        if (turmas.isEmpty()) {
+            throw new NoSuchElementException("Não há turmas cadastradas!");
+        }
+
+        List<TurmaDTO> response = new ArrayList<>();
+
+        for (Turma turma : turmas) {
+            response.add(montaTurmaDTO(turma));
+        }
+
+        return response;
+    }
+
+    private TurmaDTO montaTurmaDTO(Turma turma) {
+        List<DesafioDTO> desafios = new ArrayList<>();
+        for (Desafio desafio : turma.getDesafios()) {
+            desafios.add(DesafioDTO.builder().id(desafio.getId()).nomeDesafio(desafio.getNomeDesafio()).build());
+        }
+
+        return TurmaDTO.builder()
+                .id(turma.getId())
+                .codTurma(turma.getCodTurma())
+                .nomeTurma(turma.getNomeTurma())
+                .semestre(turma.getSemestre())
+                .codCurso(turma.getCurso().getCodCurso())
+                .desafios(desafios)
+                .build();
+    }
+
+    public GenericDTO editarTurma(TurmaModel turmaRequest){
+        validaEntities.validaEntrada(turmaRequest);
+        var db =  turmaRepository.findById(turmaRequest.getId());
+        if (!db.isPresent()) {
+            throw new NoSuchElementException("turma não encontrada");            
+        }
+
+        Turma turma = db.get();
+
+        Curso curso = cursoService.buscarPorCodigo(turmaRequest.getCodCurso());
+        
+        turma.setCodTurma(turmaRequest.getCodTurma());
+        turma.setNomeTurma(turmaRequest.getNomeTurma());
+        turma.setCurso(curso);
+        turma.setSemestre(turmaRequest.getSemestre());
+        turma.setCodCurso(turmaRequest.getCodCurso());
+
+        turmaRepository.save(turma);
+
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Turma editada com sucesso").build();
+    }
+
     public GenericDTO excluirTurma(Long id) {
-        try {
-            var turmaDB = turmaRepository.findById(id);
-            if (!turmaDB.isPresent()) {
-                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("turma não encontrada").build();
-            }
-            Turma turma = turmaDB.get();
-            turmaRepository.delete(turma);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    // Está sendo passando o get pelo codigo turma, pois, não tem a coluna nome
-                    // ainda no banco.
-                    .mensagem("Turma " + turma.getCodTurma() + " excluída com sucesso")
-                    .build();
-        } catch (EmptyResultDataAccessException e) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
-                    .mensagem("Turma " + id + " não encontrada")
-                    .build();
+        if (!turmaRepository.findById(id).isPresent()) {
+            throw new NoSuchElementException("Turma não encontrada");
         }
+
+        turmaRepository.deleteById(id);
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Turma deletada com sucesso").build();
     }
-    
+
 }

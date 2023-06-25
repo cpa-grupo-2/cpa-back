@@ -1,4 +1,4 @@
-package com.biopark.cpa.dto;
+package com.biopark.cpa.dto.pessoas;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

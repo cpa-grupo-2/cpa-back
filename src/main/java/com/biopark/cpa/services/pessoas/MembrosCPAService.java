@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.biopark.cpa.dto.GenericDTO;
-import com.biopark.cpa.dto.MembroCPADTO;
+import com.biopark.cpa.dto.pessoas.MembroCPADTO;
 import com.biopark.cpa.entities.user.User;
 import com.biopark.cpa.entities.user.enums.Level;
 import com.biopark.cpa.entities.user.enums.Role;

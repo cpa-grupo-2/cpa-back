@@ -18,6 +18,6 @@ public interface InstituicaoRepository extends JpaRepository<Instituicao, Long> 
 
     @Modifying
     @Transactional
-    @Query(value = "INSERT INTO instituicao (nome_instituicao, email, cnpj, codigo_instituicao, created_at, updated_at) VALUES (:#{#instituicao.nomeInstituicao.toLowerCase()}, :#{#instituicao.email}, :#{#instituicao.cnpj}, :#{#instituicao.codigoInstituicao.toLowerCase()}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE nome_instituicao = VALUES(nome_instituicao), email = VALUES(email), cnpj = VALUES(cnpj), created_at = VALUES(created_at), updated_at = VALUES(updated_at)", nativeQuery = true)
+    @Query(value = "INSERT INTO instituicao (nome_instituicao, email, cnpj, codigo_instituicao, created_at, updated_at, deleted) VALUES (:#{#instituicao.nomeInstituicao.toLowerCase()}, :#{#instituicao.email}, :#{#instituicao.cnpj}, :#{#instituicao.codigoInstituicao.toLowerCase()}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, false) ON DUPLICATE KEY UPDATE nome_instituicao = VALUES(nome_instituicao), email = VALUES(email), cnpj = VALUES(cnpj), created_at = VALUES(created_at), updated_at = VALUES(updated_at), deleted = VALUES(deleted)", nativeQuery = true)
     void upsert(@Param("instituicao") Instituicao instituicao);
 }

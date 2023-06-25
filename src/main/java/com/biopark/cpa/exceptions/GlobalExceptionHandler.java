@@ -68,9 +68,16 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({ NoSuchElementException.class })
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     @ResponseBody
     public ExceptionModel ElementNotFound(NoSuchElementException e) {
         return ExceptionModel.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
+    }
+
+    @ExceptionHandler({ InvalidForms.class })
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ExceptionModel invalidForm(InvalidForms e){
+        return ExceptionModel.builder().status(HttpStatus.BAD_REQUEST).mensagem(e.getMessage()).build();
     }
 }
