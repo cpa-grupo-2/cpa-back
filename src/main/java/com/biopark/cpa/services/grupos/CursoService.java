@@ -115,12 +115,8 @@ public class CursoService {
                         .build());
                 continue;
             }
-
-            try {
-                buscarCursoNome(curso.getNomeCurso());
-                buscarPorCodigoDTO(curso.getCodCurso());
+            if (!checaUniqueKey(curso).isEmpty()) {
                 erroValidations.add(ErroValidation.builder().linha(linha).mensagem("Curso já cadastrado").build());
-            } catch (NoSuchElementException e) {
             }
         }
 
@@ -173,11 +169,11 @@ public class CursoService {
         }
 
         CursoDTO cursoDTO = montaCursoDTO(optionalCurso.get());
-    
+
         return cursoDTO;
     }
 
-    public Curso buscarPorCodigo(String codigo){
+    public Curso buscarPorCodigo(String codigo) {
         var optionalCurso = cursoRepository.findByCodCurso(codigo.toLowerCase());
         if (!optionalCurso.isPresent()) {
             throw new NoSuchElementException("Curso não encontrado");
@@ -186,7 +182,7 @@ public class CursoService {
         return optionalCurso.get();
     }
 
-    public Curso buscarCursoNome(String nome){
+    public Curso buscarCursoNome(String nome) {
         var optionalCurso = cursoRepository.findByNomeCurso(nome.toLowerCase());
         if (!optionalCurso.isPresent()) {
             throw new NoSuchElementException("Curso não encontrado!");
@@ -203,13 +199,13 @@ public class CursoService {
         List<CursoDTO> cursosDTO = new ArrayList<>();
 
         for (Curso curso : cursos) {
-            cursosDTO.add(montaCursoDTO(curso));            
+            cursosDTO.add(montaCursoDTO(curso));
         }
 
         return cursosDTO;
     }
 
-    public List<CursoDTO> buscarPorInstituicao(String codInstituicao){
+    public List<CursoDTO> buscarPorInstituicao(String codInstituicao) {
         List<Curso> cursos = cursoRepository.findAllByInstituicaoCodigoInstituicao(codInstituicao.toLowerCase());
         if (cursos.isEmpty()) {
             throw new NoSuchElementException("Não há cursos cadastrados!");
@@ -224,21 +220,25 @@ public class CursoService {
         return response;
     }
 
-    private CursoDTO montaCursoDTO(Curso curso){
+    private List<Curso> checaUniqueKey(Curso curso) {
+        return cursoRepository.findUniqueKey(curso);
+    }
+
+    private CursoDTO montaCursoDTO(Curso curso) {
         List<String> cods = curso.getTurmas().stream().map(Turma::getCodTurma).collect(Collectors.toList());
 
         return CursoDTO.builder()
-            .id(curso.getId())
-            .nomeCurso(curso.getNomeCurso())
-            .codCurso(curso.getCodCurso())
-            .instituicaoId(curso.getInstituicao().getId())
-            .nomeInstituicao(curso.getInstituicao().getNomeInstituicao())
-            .codInstituicao(curso.getInstituicao().getCodigoInstituicao())
-            .turmasCod(cods)
-            .coordenadorId(curso.getProfessor().getId())
-            .nomeCoordenador(curso.getProfessor().getUser().getName())
-            .crachaCoordenador(curso.getProfessor().getCracha())
-            .build();
+                .id(curso.getId())
+                .nomeCurso(curso.getNomeCurso())
+                .codCurso(curso.getCodCurso())
+                .instituicaoId(curso.getInstituicao().getId())
+                .nomeInstituicao(curso.getInstituicao().getNomeInstituicao())
+                .codInstituicao(curso.getInstituicao().getCodigoInstituicao())
+                .turmasCod(cods)
+                .coordenadorId(curso.getProfessor().getId())
+                .nomeCoordenador(curso.getProfessor().getUser().getName())
+                .crachaCoordenador(curso.getProfessor().getCracha())
+                .build();
     }
 
     @Transactional
@@ -254,8 +254,8 @@ public class CursoService {
         Instituicao instituicao = instituicaoService.buscarPorCodigo(cursoRequest.getCodInstituicao());
         Professor professor = professorService.buscarPorCracha(cursoRequest.getCrachaCoordenador());
 
-        professor.setCoordenador(true);
-        professorRepository.save(professor);
+        boolean flag = ((curso.getNomeCurso().equalsIgnoreCase(cursoRequest.getNomeCurso()))
+            ||(curso.getCodCurso().equalsIgnoreCase(cursoRequest.getCodCurso()))) ? true : false;
 
         curso.setNomeCurso(cursoRequest.getNomeCurso());
         curso.setCodCurso(cursoRequest.getCodCurso());
@@ -264,7 +264,16 @@ public class CursoService {
         curso.setProfessor(professor);
         curso.setInstituicao(instituicao);
 
+        List<Curso> uniqueKeys = checaUniqueKey(curso);
+
+        if (((flag) && (uniqueKeys.size()>1))||((!flag) && (uniqueKeys.size()>0))) {
+            return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Nome ou código do curso já estão cadastrados").build();
+        }
+
         cursoRepository.save(curso);
+        professor.setCoordenador(true);
+        professorRepository.save(professor);
+
         return GenericDTO.builder().status(HttpStatus.OK).mensagem("Curso editado com sucesso").build();
     }
 

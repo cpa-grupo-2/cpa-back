@@ -1,5 +1,6 @@
 package com.biopark.cpa.repository.grupo;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,10 @@ import jakarta.transaction.Transactional;
 @Repository
 public interface InstituicaoRepository extends JpaRepository<Instituicao, Long> {
     Optional<Instituicao> findByCodigoInstituicao(String codigoInstituicao);
+
+    @Modifying
+    @Query(value = "SELECT * FROM instituicao WHERE codigo_instituicao = :#{#instituicao.codigoInstituicao.toLowerCase()}", nativeQuery = true)
+    List<Instituicao> findUniqueKey(@Param("instituicao") Instituicao instituicao);
 
     @Modifying
     @Transactional

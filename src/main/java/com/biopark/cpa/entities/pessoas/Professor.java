@@ -5,11 +5,14 @@ import java.util.List;
 
 import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Where;
 
 import com.biopark.cpa.entities.grupos.Curso;
 import com.biopark.cpa.entities.user.User;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -31,6 +34,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "professor")
+@SQLDelete(sql = "UPDATE professor SET deleted = true WHERE id = ?")
+@Where(clause = "deleted = false")
 public class Professor {
 
     @Id
@@ -48,7 +53,7 @@ public class Professor {
     @OneToMany(mappedBy = "professor")
     private List<Curso> cursos;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -59,4 +64,7 @@ public class Professor {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Builder.Default
+    private boolean deleted = false;
 }

@@ -16,10 +16,12 @@ import jakarta.transaction.Transactional;
 @Repository
 public interface CursoRepository extends JpaRepository<Curso, Long> {
     Optional<Curso> findByCodCurso(String codigoCurso);
-
     Optional<Curso> findByNomeCurso(String curso);
-
     List<Curso> findAllByInstituicaoCodigoInstituicao(String codInstituicao);
+    
+    @Modifying
+    @Query(value = "SELECT * FROM curso WHERE cod_curso = :#{#curso.codCurso.toLowerCase()} OR nome_curso = :#{#curso.nomeCurso.toLowerCase()}", nativeQuery = true)
+    List<Curso> findUniqueKey(@Param("curso") Curso curso);
 
     @Modifying
     @Transactional

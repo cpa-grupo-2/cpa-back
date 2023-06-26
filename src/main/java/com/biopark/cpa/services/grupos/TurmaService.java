@@ -151,6 +151,15 @@ public class TurmaService {
         return response;
     }
 
+    public Turma buscaPorId(Long id){
+        var db = turmaRepository.findById(id);
+        if (!db.isPresent()) {
+            throw new NoSuchElementException("Turma não encontrada");
+        }
+
+        return db.get();
+    }
+
     public TurmaDTO buscarPorCodigoDTO(String codigo){
         var optionalTurma = turmaRepository.findByCodTurma(codigo.toLowerCase());
         if (!optionalTurma.isPresent()) {
@@ -172,6 +181,10 @@ public class TurmaService {
         }
 
         return response;
+    }
+
+    private List<Turma> checaUniqueKeys(Turma turma){
+        return turmaRepository.findUniqueKeys(turma);
     }
 
     private TurmaDTO montaTurmaDTO(Turma turma) {
@@ -201,11 +214,19 @@ public class TurmaService {
 
         Curso curso = cursoService.buscarPorCodigo(turmaRequest.getCodCurso());
         
+        boolean flag = ((turma.getCodTurma().equalsIgnoreCase(turmaRequest.getCodTurma()))|(turma.getNomeTurma().equalsIgnoreCase(turmaRequest.getNomeTurma()))) ? true : false;
+
         turma.setCodTurma(turmaRequest.getCodTurma());
         turma.setNomeTurma(turmaRequest.getNomeTurma());
         turma.setCurso(curso);
         turma.setSemestre(turmaRequest.getSemestre());
         turma.setCodCurso(turmaRequest.getCodCurso());
+
+        List<Turma> uniqueKeys = checaUniqueKeys(turma);
+
+        if ((flag && uniqueKeys.size() > 1)||((!flag) && (!uniqueKeys.isEmpty()))) {
+            return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("nome ou codigo de turma já estão cadastrados").build();
+        }
 
         turmaRepository.save(turma);
 

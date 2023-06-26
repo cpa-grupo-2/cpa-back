@@ -3,22 +3,20 @@ package com.biopark.cpa.services.pessoas;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.biopark.cpa.dto.GenericDTO;
-import com.biopark.cpa.dto.pessoas.MembroCPADTO;
+import com.biopark.cpa.dto.pessoas.UserDTO;
 import com.biopark.cpa.entities.user.User;
 import com.biopark.cpa.entities.user.enums.Level;
 import com.biopark.cpa.entities.user.enums.Role;
-import com.biopark.cpa.form.pessoas.CadastroCPA;
+import com.biopark.cpa.form.pessoas.CadastroCPAModel;
 import com.biopark.cpa.repository.pessoas.UserRepository;
 import com.biopark.cpa.services.security.GeneratePassword;
+import com.biopark.cpa.services.utils.ValidaEntities;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -26,26 +24,11 @@ import lombok.RequiredArgsConstructor;
 public class MembrosCPAService {
     private final UserRepository userRepository;
     private final UserService userService;
-    private final Validator validator;
     private final GeneratePassword generatePassword;
+    private final ValidaEntities validaEntities;
 
-    public GenericDTO cadastrarCPA(CadastroCPA usuarioCPA) {
-        Set<ConstraintViolation<CadastroCPA>> violacoes = validator.validate(usuarioCPA);
-
-        if (!violacoes.isEmpty()) {
-            String mensagem = "";
-            for (ConstraintViolation<CadastroCPA> violacao : violacoes) {
-                mensagem += violacao.getMessage() + "; ";
-            }
-            return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem(mensagem).build();
-        }
-
-        try {
-            userService.buscarPorCpf(usuarioCPA.getCpf());
-            userService.buscarPorEmail(usuarioCPA.getEmail());
-            return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Usuario já cadastrado").build();   
-        } catch (NoSuchElementException e) {
-        }
+    public GenericDTO cadastrarCPA(CadastroCPAModel usuarioCPA) {
+        validaEntities.validaEntrada(usuarioCPA);
 
         User user = User.builder()
                 .name(usuarioCPA.getName())
@@ -57,80 +40,66 @@ public class MembrosCPAService {
                 .role(Role.EXTERNO)
                 .build();
 
+        if (!userService.checaUniqueKeys(user).isEmpty()) {
+            return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Este usuario já existe").build();
+        }
+
         userRepository.save(user);
         return GenericDTO.builder().status(HttpStatus.OK).mensagem("Usuário cadastrado com sucesso.").build();
     }
-
-    // Filtrar Membro CPA por id
-    public MembroCPADTO buscarPorID(Long id) {
-        var optionalMembrosCPA = userRepository.findById(id);
-        if (!optionalMembrosCPA.isPresent()) {
-            throw new NoSuchElementException("Membros CPA não encontrado!");
-        }
-
-        User user = optionalMembrosCPA.get();
-        return MembroCPADTO.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .cpf(user.getCpf())
-                .telefone(user.getTelefone())
-                .email(user.getEmail())
-                .build();
-    }
-
-    // Filtrar todos os Membros CPA
-    public List<MembroCPADTO> buscarTodosMembrosCPA() {
+    
+    public List<UserDTO> buscarTodosMembrosCPADTO() {
         List<User> users = userRepository.findAllByLevel(Level.CPA.name());
         if (users.isEmpty()) {
             throw new NoSuchElementException("Não há Membros CPA cadastrados!");
         }
-        List<MembroCPADTO> membrosCPA = new ArrayList<>();
+
+        List<UserDTO> membrosCPA = new ArrayList<>();
         for (User user: users) {
             membrosCPA.add(
-                MembroCPADTO.builder()
+                UserDTO.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .cpf(user.getCpf())
                 .telefone(user.getTelefone())
                 .email(user.getEmail())
+                .role(user.getRole().name())
                 .build()
             );
         }
         return membrosCPA;
     }
 
-    // Editar Membro CPA
-    // public MembroCPADTO editarMembroCPA(Cadastro membrosCPARequest) {
-    //     try {
-    //         CadastroCPA membrosCPA = buscarPorID(membrosCPARequest.getId());
-    //         membrosCPA.getUser().setName(membrosCPARequest.getUser().getName());
-    //         membrosCPA.getUser().setTelefone(membrosCPARequest.getUser().getTelefone());
-    //         membrosCPA.getUser().setEmail(membrosCPARequest.getUser().getEmail());
-    //         membrosCPARepository.save(membrosCPA);
-    //         return GenericDTO.builder().status(HttpStatus.OK)
-    //                 .mensagem("Membro CPA " + membrosCPARequest.getId() + "editado com sucesso")
-    //                 .build();
-    //     } catch (Exception e) {
-    //         return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
-    //     }
-    // }
+    public GenericDTO editarMembroCPA(CadastroCPAModel model){
+        validaEntities.validaEntrada(model);
+        User user = userService.buscarPorId(model.getId());
 
-    // // Excluir Membro CPA
-    // public GenericDTO excluirMembroCPA(Long id) {
-    //     try {
-    //         var membroCPADB = MembrosCPARepository.findById(id);
-    //         if (!membroCPADB.isPresent()) {
-    //             return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("membro CPA não encontrado").build();
-    //         }
-    //         CadastroCPA membrosCPA = membroCPADB.get();
-    //         MembrosCPARepository.delete(CadastroCPA);
-    //         return GenericDTO.builder().status(HttpStatus.OK)
-    //                 .mensagem("Membro CPA " + membrosCPA.getId() + " excluído com sucesso")
-    //                 .build();
-    //     } catch (EmptyResultDataAccessException e) {
-    //         return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
-    //                 .mensagem("Membro CPA " + id + " não encontrado")
-    //                 .build();
-    //     }
-    // }
+        if (user.getLevel() != Level.CPA) {
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("usuário informado não é membro cpa").build();
+        }
+
+        boolean flag = ((user.getCpf().equals(model.getCpf()))|(user.getEmail().equals(model.getEmail()))) ? true : false;        
+
+        user.setCpf(model.getCpf());
+        user.setEmail(model.getEmail());
+        user.setName(model.getName());
+        user.setTelefone(model.getTelefone());
+
+        if ((flag && userService.checaUniqueKey(user).size() > 1)||((!flag)&&(!userService.checaUniqueKey(user).isEmpty()))) {
+            return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("usuário já existe").build();
+        }
+
+        userRepository.save(user);
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Membro CPA editado com sucesso").build();
+    }
+
+    public GenericDTO deleteMembroCPA(Long id){
+        User user = userService.buscarPorId(id);
+        if (user.getLevel()!=Level.CPA) {
+            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("usuário informado não é membro cpa").build();
+        }
+
+        userRepository.delete(user);
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Membro deletado com sucesso").build();
+    }
 }

@@ -84,7 +84,7 @@ public class InstituicaoService {
                 continue;
             }
 
-            if (instituicaoRepository.findByCodigoInstituicao(instituicao.getCodigoInstituicao()).isPresent()) {
+            if (checaUniqueKey(instituicao).size()>0) {
                 erroValidations
                         .add(ErroValidation.builder().linha(linha).mensagem("Instituição já cadastrada").build());
             }
@@ -137,6 +137,10 @@ public class InstituicaoService {
         return instituicao;
     }
 
+    private List<Instituicao> checaUniqueKey(Instituicao instituicao){
+        return instituicaoRepository.findUniqueKey(instituicao);
+    }
+
     private InstituicaoDTO montaResponse(Instituicao instituicao){
         List<String> cods = instituicao.getCursos().stream().map(Curso::getCodCurso).collect(Collectors.toList());
 
@@ -160,11 +164,19 @@ public class InstituicaoService {
         }
 
         Instituicao instituicao = db.get();
+
+        boolean flag = (!instituicao.getCodigoInstituicao().equalsIgnoreCase(instituicaoRequest.getCodigoInstituicao())) ? true : false;
+
         instituicao.setNomeInstituicao(instituicaoRequest.getNomeInstituicao());
         instituicao.setCnpj(instituicaoRequest.getCnpj());
         instituicao.setEmail(instituicaoRequest.getEmail());
         instituicao.setCodigoInstituicao(instituicaoRequest.getCodigoInstituicao());
 
+        if (flag) {
+            if (checaUniqueKey(instituicao).size() > 0) {
+                return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("O código de instituição já se encontra no banco de dados").build();
+            }
+        }
         instituicaoRepository.save(instituicao);
 
         return GenericDTO.builder().status(HttpStatus.OK).mensagem("Instituição editada com sucesso").build();
