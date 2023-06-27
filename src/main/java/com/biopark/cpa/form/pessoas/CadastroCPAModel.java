@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CadastroCPA {
+public class CadastroCPAModel {
    
    @Id
    @GeneratedValue(strategy = GenerationType.IDENTITY)

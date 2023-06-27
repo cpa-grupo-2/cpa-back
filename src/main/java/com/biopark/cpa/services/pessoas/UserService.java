@@ -3,12 +3,9 @@ package com.biopark.cpa.services.pessoas;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.biopark.cpa.dto.GenericDTO;
+import com.biopark.cpa.dto.pessoas.UserDTO;
 import com.biopark.cpa.entities.user.User;
 import com.biopark.cpa.repository.pessoas.UserRepository;
 
@@ -18,78 +15,66 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
-    public User buscarPorEmail(String email) {
-        var optionalUser = userRepository.findByEmail(email);
+    public List<User> checaUniqueKeys(User user){
+        return userRepository.findUniqueKeys(user);
+    }
+
+    public List<User> checaUniqueKey(User user){
+        return userRepository.findUniqueKeys(user);
+    }
+
+    public List<User> checarUniqueKey(String cpf, String email){
+        return userRepository.findUniqueKeys(cpf.toLowerCase(), email.toLowerCase());
+    }
+
+    public UserDTO buscarPorIdDTO(Long id) {
+        var optionalUser = userRepository.findById(id);
 
         if (!optionalUser.isPresent()) {
             throw new NoSuchElementException("Usuário não encontrado!");
-        } 
-        return optionalUser.get();
+        }
+
+        return montaUserDTO(optionalUser.get());
     }
-
-    public User buscarPorCpf(String cpf) {
-        var optionalUser = userRepository.findByCpf(cpf);
-
-        if (!optionalUser.isPresent()) {
-            throw new NoSuchElementException("Usuário não encontrado!");
-        } 
-        return optionalUser.get();
-    }
-
-
 
     public User buscarPorId(Long id) {
         var optionalUser = userRepository.findById(id);
 
-        if (optionalUser.isPresent()) {
-            return optionalUser.get();
-        } else {
+        if (!optionalUser.isPresent()) {
             throw new NoSuchElementException("Usuário não encontrado!");
         }
+
+        return optionalUser.get();
     }
 
-    public List<User> buscarTodos() {
-        List<User> users = userRepository.findAll();
-        if (users.isEmpty()) {
-            throw new NoSuchElementException("Não há usuários cadastrados!");
+    public User buscarPorCpf(String cpf){
+        var db = userRepository.findByCpf(cpf);
+        if (!db.isPresent()) {
+            throw new NoSuchElementException("Usuário não encontrado");
         }
-        return users;
+
+        return db.get();
+    }
+
+    public User buscarPorEmail(String email){
+        var db = userRepository.findByEmail(email);
+        if (!db.isPresent()) {
+            throw new NoSuchElementException("Usuário não encontrado");
+        }
+
+        return db.get();
+    }
+
+    private UserDTO montaUserDTO(User user){
+        return UserDTO.builder().
+            id(user.getId())
+            .name(user.getName())
+            .cpf(user.getCpf())
+            .telefone(user.getTelefone())
+            .email(user.getEmail())
+            .role(user.getRole().name())
+            .build();
     }
     
-
-    public GenericDTO editarUser(User UserRequest) {
-        try {
-            User user = buscarPorId(UserRequest.getId());
-            user.setName(UserRequest.getName());
-            user.setTelefone(UserRequest.getTelefone());
-            user.setEmail(UserRequest.getEmail());
-            user.setPassword(passwordEncoder.encode(UserRequest.getPassword()));
-            userRepository.save(user);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Usuario" + UserRequest.getId() + " editado com sucesso").build();
-        } catch (Exception e) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
-        }
-    }
-
-    public GenericDTO excluirUser(Long id) {
-        try {
-            var userDB = userRepository.findById(id);
-            if (!userDB.isPresent()) {
-                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("usuário não encontrado").build();
-            }
-            User user = userDB.get();
-            userRepository.delete(user);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Usuário " + user.getName() + " excluído com sucesso")
-                    .build();
-        } catch (EmptyResultDataAccessException e) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
-                    .mensagem("Usuário " + id + " não encontrado")
-                    .build();
-        }
-    }
-
 }

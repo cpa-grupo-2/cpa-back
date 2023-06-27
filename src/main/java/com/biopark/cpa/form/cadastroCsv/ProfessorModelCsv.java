@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProfessorModel extends UserModel{    
+public class ProfessorModelCsv extends UserModel{    
     @CsvBindByName(column = "cracha")
     @NotBlank(message = "O campo crachá é obrigatório")
     private String cracha;

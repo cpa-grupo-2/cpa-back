@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 
 import com.biopark.cpa.dto.GenericDTO;
-import com.biopark.cpa.form.pessoas.CadastroCPA;
+import com.biopark.cpa.form.pessoas.CadastroCPAModel;
 import com.biopark.cpa.repository.pessoas.UserRepository;
 
 @SpringBootTest
@@ -23,14 +23,14 @@ public class MembrosCPAServiceTests {
 
     @Test
     void cadastrarCPA() {
-        CadastroCPA cadastroInvalido = CadastroCPA.builder()
+        CadastroCPAModel cadastroInvalido = CadastroCPAModel.builder()
                 .cpf("11111111111")
                 .email("dkasjldjalljkla.com")
                 .name(null)
                 .telefone("")
                 .build();
 
-        CadastroCPA cadastroCPA = CadastroCPA.builder()
+        CadastroCPAModel cadastroCPA = CadastroCPAModel.builder()
                 .cpf("111.111.111-11")
                 .email("djkahdk@gmail.com")
                 .name("testeCPA")

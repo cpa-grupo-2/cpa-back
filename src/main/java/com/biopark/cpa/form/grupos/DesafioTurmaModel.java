@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class DesafioTurmaModel {
     @NotNull(message = "desafioId não deve ser nulo")
-    private List<Integer> desafioId;
+    private List<Long> desafioId;
     
     @NotNull(message = "TurmaId não deve ser nulo")
-    private int TurmaId;
+    private Long TurmaId;
 }

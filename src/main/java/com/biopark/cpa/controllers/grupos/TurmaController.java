@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,8 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
+import com.biopark.cpa.dto.grupos.TurmaDTO;
 import com.biopark.cpa.entities.grupos.Turma;
-import com.biopark.cpa.repository.grupo.TurmaRepository;
+import com.biopark.cpa.form.grupos.TurmaModel;
 import com.biopark.cpa.services.grupos.TurmaService;
 import com.biopark.cpa.services.utils.CsvParserService;
 
@@ -30,7 +32,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('CPA')")
 public class TurmaController {
-    private final TurmaRepository turmaRepository;
     private final CsvParserService csvParserService;
     private final TurmaService turmaService;
 
@@ -42,29 +43,31 @@ public class TurmaController {
     }
 
     @GetMapping
-    public ResponseEntity<Turma>buscarCodigoTurma(@RequestParam(name = "codigoTurma") String codigoTurma) {
-        Turma turma = turmaService.buscarPorCodigo(codigoTurma);
-        return ResponseEntity.status(HttpStatus.OK).body(turma); 
+    public ResponseEntity<List<TurmaDTO>>buscarTodasTurmas() {
+        List<TurmaDTO> turmas = turmaService.buscarTodasTurmasDTO();
+        return ResponseEntity.status(HttpStatus.OK).body(turmas); 
     }
 
-    @GetMapping("/turmas")
-    public ResponseEntity<List<Turma>>buscarTodasTurmas() {
-        var turmas = turmaRepository.findAll();
-        if (turmas.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(turmas);
-        }
+    @GetMapping("/codigo/{codTurma}")
+    public ResponseEntity<TurmaDTO> buscarCodTurma(@PathVariable("codTurma") String codTurma) {
+        TurmaDTO turma = turmaService.buscarPorCodigoDTO(codTurma);
+        return ResponseEntity.status(HttpStatus.OK).body(turma);
+    }
+
+    @GetMapping("/codigo_curso/{codCurso}")
+    public ResponseEntity<List<TurmaDTO>> buscarCodCursoTurma(@PathVariable("codCurso") String codCurso) {
+        List<TurmaDTO> turmas = turmaService.buscarPorCodigoCursoDTO(codCurso);
         return ResponseEntity.status(HttpStatus.OK).body(turmas);
     }
     
     @PutMapping
-    public ResponseEntity<GenericDTO> editarTurma (@RequestBody Turma turma) {
+    public ResponseEntity<GenericDTO> editarTurma (@RequestBody TurmaModel turma) {
         GenericDTO response = turmaService.editarTurma(turma);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    @DeleteMapping
-    public ResponseEntity<GenericDTO> excluirTurma(@RequestParam("id") int idRequest) {
-        Long id = Long.valueOf(idRequest);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<GenericDTO> excluirTurma(@PathVariable("id") Long id) {
         GenericDTO response = turmaService.excluirTurma(id);
         return ResponseEntity.status(response.getStatus()).body(response);
     }

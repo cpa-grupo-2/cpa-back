@@ -2,21 +2,22 @@ package com.biopark.cpa.controllers.grupos;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.biopark.cpa.dto.GenericDTO;
+import com.biopark.cpa.dto.grupos.EixoDTO;
 import com.biopark.cpa.entities.grupos.Eixo;
-import com.biopark.cpa.repository.grupo.EixoRepository;
+import com.biopark.cpa.form.grupos.EixoModel;
 import com.biopark.cpa.services.grupos.EixoService;
+
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -24,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("api/eixo")
 public class EixoController {
     private final EixoService eixoService;
-    private final EixoRepository eixoRepository;
 
     @PostMapping
     public ResponseEntity<GenericDTO> cadastrarEixo(@RequestBody Eixo eixo) {
@@ -32,34 +32,26 @@ public class EixoController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    // Buscar eixo por nome
     @GetMapping
-    public ResponseEntity<Eixo> buscarEixoPorID(@RequestParam(name = "id") Long id) {
-        Eixo eixo = eixoService.buscarEixoPorID(id);
-        return ResponseEntity.status(HttpStatus.OK).body(eixo);
+    public ResponseEntity<List<EixoDTO>> buscarTodosEixos() {
+        List<EixoDTO> eixos = eixoService.buscarTodosEixosDTO();
+        return ResponseEntity.ok().body(eixos);
     }
 
-    // Buscar todos os eixos
-    @GetMapping("/eixos")
-    public ResponseEntity<List<Eixo>> buscarTodosEixos() {
-        List<Eixo> eixos = eixoRepository.findAll();
-        if (eixos.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(eixos);
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(eixos);
+    @GetMapping("/{id}")
+    public ResponseEntity<EixoDTO> buscarId(@PathVariable("id") Long id){
+        EixoDTO eixo = eixoService.buscarEixoIdDTO(id);
+        return ResponseEntity.ok().body(eixo);
     }
 
-    // Editar eixo
     @PutMapping
-    public ResponseEntity<GenericDTO> editarEixo(@RequestBody Eixo eixo) {
-        GenericDTO response = eixoService.editarEixo(eixo);
+    public ResponseEntity<GenericDTO> editarEixo(@RequestBody EixoModel model) {
+        GenericDTO response = eixoService.editar(model);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    // Excluir eixo
-    @DeleteMapping
-    public ResponseEntity<GenericDTO> excluirEixo(@RequestParam("id") int idRequest) {
-        Long id = Long.valueOf(idRequest);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<GenericDTO> excluirEixo(@PathVariable("id") Long id) {
         GenericDTO response = eixoService.excluirEixo(id);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
