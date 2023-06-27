@@ -9,7 +9,9 @@ import lombok.Data;
 @Data
 @Builder
 @AllArgsConstructor
-public class QuestaoModel {
+public class QuestaoEditModel {
+    @NotNull
+    private final Long id;
     @NotBlank(message = "O campo descrição não pode ser nulo")
     private final String descricao;
     @NotBlank(message = "O tipo de questão não pode ser nulo")

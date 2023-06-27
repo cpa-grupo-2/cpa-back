@@ -2,8 +2,11 @@ package com.biopark.cpa.entities.grupos;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Where;
 
 import com.biopark.cpa.entities.grupos.enums.TipoQuestao;
 
@@ -29,16 +32,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "questao")
+@SQLDelete(sql = "UPDATE questao SET deleted = true WHERE id = ?")
+@Where(clause = "deleted = false")
 public class Questao {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    
-
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     @NotBlank(message = "O campo descrição não pode ser nulo")
+    @ColumnTransformer(write = "LOWER(?)")
     private String descricao;
 
     @Enumerated(EnumType.STRING)
@@ -56,4 +60,7 @@ public class Questao {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Builder.Default
+    private boolean deleted = false;
 }

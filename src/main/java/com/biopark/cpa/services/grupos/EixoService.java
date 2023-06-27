@@ -1,102 +1,106 @@
 package com.biopark.cpa.services.grupos;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
-import jakarta.validation.Validator;
 
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import com.biopark.cpa.dto.GenericDTO;
-import com.biopark.cpa.entities.grupos.Eixo;
-import com.biopark.cpa.repository.grupo.EixoRepository;
 
-import jakarta.validation.ConstraintViolation;
+import com.biopark.cpa.dto.GenericDTO;
+import com.biopark.cpa.dto.grupos.EixoDTO;
+import com.biopark.cpa.entities.grupos.Eixo;
+import com.biopark.cpa.form.grupos.EixoModel;
+import com.biopark.cpa.repository.grupo.EixoRepository;
+import com.biopark.cpa.services.utils.ValidaEntities;
+
 import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
 public class EixoService {
     private final EixoRepository eixoRepository;
-    private final Validator validator;
+    private final ValidaEntities validaEntities;
 
-    // Cadastrar Eixo
-    public GenericDTO cadastrarEixo(Eixo eixo) {
-        Set<ConstraintViolation<Eixo>> violacoes = validator.validate(eixo);
+    public GenericDTO cadastrarEixo(Eixo model) {
+        validaEntities.validaEntrada(model);
 
-        if (!violacoes.isEmpty()) {
-            String mensagem = "";
-            for (ConstraintViolation<Eixo> violacao : violacoes) {
-                mensagem += violacao.getMessage() + "; ";
-            }
-            return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem(mensagem).build();
-        }
-
-        if (eixoRepository.findByNomeEixo(eixo.getNomeEixo()).isPresent()) {
+        if (!uniqueKeys(model.getNomeEixo()).isEmpty()) {
             return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Eixo já cadastrado").build();
         }
 
-        Eixo novoEixo = Eixo.builder()
-                .nomeEixo(eixo.getNomeEixo())
-                .descricao(eixo.getDescricao())
+        Eixo eixo = Eixo.builder()
+                .nomeEixo(model.getNomeEixo())
+                .descricao(model.getDescricao())
                 .build();
 
-        eixoRepository.save(novoEixo);
+        eixoRepository.save(eixo);
         return GenericDTO.builder().status(HttpStatus.OK).mensagem("Eixo cadastrado com sucesso.").build();
     }
 
-    // Filtrar eixo por nome
-    public Eixo buscarEixoPorID(Long id) {
-        var optionalEixo = eixoRepository.findById(id);
-        if (optionalEixo.isPresent()) {
-            return optionalEixo.get();
-        } else {
-            throw new NoSuchElementException("Eixo não encontrado!");
-        }
+    public List<Eixo> uniqueKeys(String nomeEixo){
+        return eixoRepository.findByUniqueKeys(nomeEixo.toLowerCase());
     }
 
-    // Filtrar todos os eixos
-    public List<Eixo> buscarTodosEixos() {
-        var eixos = eixoRepository.findAll();
+    private EixoDTO montaDTO(Eixo eixo){
+        return EixoDTO.builder()
+            .id(eixo.getId())
+            .nomeEixo(eixo.getNomeEixo())
+            .descricao(eixo.getDescricao())
+            .build();
+    }
+    public List<EixoDTO> buscarTodosEixosDTO() {
+        List<Eixo> eixos = eixoRepository.findAll();
         if (eixos.isEmpty()) {
             throw new NoSuchElementException("Não há eixos cadastrados!");
         }
-        return eixos;
+
+        List<EixoDTO> response = new ArrayList<>();
+
+        for (Eixo eixo : eixos) {
+            response.add(montaDTO(eixo));
+        }
+        return response;
     }
 
-    
-    //Editar eixo
-    public GenericDTO editarEixo(Eixo eixoRequest) {
-        try {
-            Eixo eixo = buscarEixoPorID(eixoRequest.getId());
-            eixo.setNomeEixo(eixoRequest.getNomeEixo());
-            eixo.setDescricao(eixoRequest.getDescricao());
-            eixoRepository.save(eixo);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Eixo " + eixoRequest.getId() + " editado com sucesso")
-                    .build();
-        } catch (Exception e) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
+    public EixoDTO buscarEixoIdDTO(Long id){
+        var op = eixoRepository.findById(id);
+        if (!op.isPresent()) {
+            throw new NoSuchElementException("Eixo não encontrado");
         }
+
+        return montaDTO(op.get());
     }
 
-    //Excluir eixo
-    public GenericDTO excluirEixo(Long id) {
-        try {
-            var eixoDB = eixoRepository.findById(id);
-            if (!eixoDB.isPresent()) {
-                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("Eixo não encontrado").build();
-            }
-            Eixo eixo = eixoDB.get();
-            eixoRepository.delete(eixo);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Eixo " + eixo.getNomeEixo() + " excluído com sucesso")
-                    .build();
-        } catch (EmptyResultDataAccessException e) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
-                    .mensagem("Eixo " + id + " não encontrado")
-                    .build();
+    public Eixo buscarEixoId(Long id){
+        var op = eixoRepository.findById(id);
+        if (!op.isPresent()) {
+            throw new NoSuchElementException("Eixo não encontrado");
         }
+
+        return op.get();
+    }
+
+    public GenericDTO editar(EixoModel model){
+        Eixo eixo = buscarEixoId(model.getId());
+
+        boolean flag = (model.getNomeEixo().equalsIgnoreCase(eixo.getNomeEixo())) ? true : false;
+
+        if (!flag && (!uniqueKeys(model.getNomeEixo()).isEmpty())) {
+            return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Eixo já cadastrado").build();
+        }
+
+        eixo.setNomeEixo(model.getNomeEixo());
+        eixo.setDescricao(model.getDescricao());
+
+        eixoRepository.save(eixo);
+
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Eixo atualizado com sucesso").build();
+    }
+
+    public GenericDTO excluirEixo(Long id){
+        Eixo eixo = buscarEixoId(id);
+        eixoRepository.delete(eixo);
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Eixo excluido com sucesso").build();
     }
 }

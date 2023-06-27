@@ -5,7 +5,9 @@ import java.util.List;
 
 import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Where;
 
 import com.opencsv.bean.CsvBindByName;
 
@@ -28,6 +30,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "desafio")
+@SQLDelete(sql = "UPDATE desafio SET deleted = true WHERE id = ?")
+@Where(clause = "deleted = false")
 public class Desafio {
 
     @Id
@@ -50,4 +54,7 @@ public class Desafio {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Builder.Default
+    private boolean deleted = false;
 }

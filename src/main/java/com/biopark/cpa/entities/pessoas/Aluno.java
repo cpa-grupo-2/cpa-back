@@ -5,7 +5,9 @@ import java.util.List;
 
 import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Where;
 
 import com.biopark.cpa.entities.grupos.DesafioTurma;
 import com.biopark.cpa.entities.user.User;
@@ -32,6 +34,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "aluno")
+@SQLDelete(sql = "UPDATE aluno SET deleted = true WHERE id = ?")
+@Where(clause = "deleted = false")
 public class Aluno {
 
     @Id
@@ -42,7 +46,7 @@ public class Aluno {
     @ColumnTransformer(write = "LOWER(?)")
     private String ra;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "user_id")
     private User user;
 
@@ -61,4 +65,7 @@ public class Aluno {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Builder.Default
+    private boolean deleted = false;
 }

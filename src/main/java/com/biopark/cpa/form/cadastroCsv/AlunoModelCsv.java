@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AlunoModel extends UserModel{
+public class AlunoModelCsv extends UserModel{
     
     @CsvBindByName(column = "RA")
     @NotBlank(message = "RA não deve ser nulo")

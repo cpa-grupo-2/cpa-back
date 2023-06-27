@@ -6,24 +6,28 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.dto.cadastroCsv.ErroValidation;
 import com.biopark.cpa.dto.cadastroCsv.ValidationModel;
+import com.biopark.cpa.dto.grupos.DesafioTurmaDTO;
+import com.biopark.cpa.dto.pessoas.AlunoDTO;
 import com.biopark.cpa.entities.grupos.DesafioTurma;
-import com.biopark.cpa.entities.grupos.Turma;
 import com.biopark.cpa.entities.pessoas.Aluno;
 import com.biopark.cpa.entities.user.User;
 import com.biopark.cpa.entities.user.enums.Level;
 import com.biopark.cpa.entities.user.enums.Role;
-import com.biopark.cpa.form.cadastroCsv.AlunoModel;
+import com.biopark.cpa.form.cadastroCsv.AlunoModelCsv;
+import com.biopark.cpa.form.pessoas.AlunoModel;
 import com.biopark.cpa.repository.grupo.DesafioTurmaRepository;
 import com.biopark.cpa.repository.pessoas.AlunoRepository;
 import com.biopark.cpa.repository.pessoas.UserRepository;
 import com.biopark.cpa.services.security.GeneratePassword;
 import com.biopark.cpa.services.utils.CsvParserService;
+import com.biopark.cpa.services.utils.ValidaEntities;
 
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -38,9 +42,11 @@ public class AlunoService {
     private final UserRepository userRepository;
     private final AlunoRepository alunoRepository;
     private final GeneratePassword generatePassword;
+    private final ValidaEntities validaEntities;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public CadastroDTO cadastrarAluno(List<AlunoModel> alunosModel, boolean update) {
+    public CadastroDTO cadastrarAluno(List<AlunoModelCsv> alunosModel, boolean update) {
         List<ErroValidation> errors = csvService.validaEntrada(alunosModel);
         List<ErroValidation> warnings = new ArrayList<>();
 
@@ -48,7 +54,7 @@ public class AlunoService {
             return CadastroDTO.builder().status(HttpStatus.BAD_REQUEST).erros(errors).warnings(warnings).build();
         }
 
-        ValidationModel<AlunoModel> model = verificaDependencias(alunosModel);
+        ValidationModel<AlunoModelCsv> model = verificaDependencias(alunosModel);
 
         if (!model.getErrors().isEmpty()) {
             return CadastroDTO.builder().status(HttpStatus.NOT_FOUND).erros(model.getErrors()).warnings(warnings)
@@ -58,7 +64,7 @@ public class AlunoService {
         alunosModel = model.getObjects();
 
         if (!update) {
-            ValidationModel<AlunoModel> modelDuplicate = checarDuplicatas(alunosModel);
+            ValidationModel<AlunoModelCsv> modelDuplicate = checarDuplicatas(alunosModel);
 
             if (!modelDuplicate.getErrors().isEmpty()) {
                 return CadastroDTO.builder().status(HttpStatus.CONFLICT).erros(modelDuplicate.getErrors())
@@ -68,7 +74,7 @@ public class AlunoService {
             List<User> users = new ArrayList<>();
             List<Aluno> alunos = new ArrayList<>();
 
-            for (AlunoModel alunoModel : alunosModel) {
+            for (AlunoModelCsv alunoModel : alunosModel) {
                 User user = User.builder()
                         .cpf(alunoModel.getCpf())
                         .name(alunoModel.getName())
@@ -89,7 +95,7 @@ public class AlunoService {
             return CadastroDTO.builder().status(HttpStatus.OK).erros(errors).warnings(warnings).build();
         }
 
-        for (AlunoModel alunoModel : alunosModel) {
+        for (AlunoModelCsv alunoModel : alunosModel) {
             User user = User.builder()
                     .cpf(alunoModel.getCpf())
                     .email(alunoModel.getEmail())
@@ -99,13 +105,13 @@ public class AlunoService {
                     .role(Role.ALUNO)
                     .level(Level.USER)
                     .build();
-
+                    
+            userRepository.upsert(user);
             user = userService.buscarPorCpf(user.getCpf());
 
             Aluno aluno = Aluno.builder().ra(alunoModel.getRa()).desafioTurmas(alunoModel.getDesafiosTurma()).user(user)
                     .build();
 
-            userRepository.upsert(user);
             alunoRepository.upsert(aluno);
 
             aluno = buscarPorRa(alunoModel.getRa());
@@ -116,12 +122,12 @@ public class AlunoService {
         return CadastroDTO.builder().status(HttpStatus.OK).erros(errors).warnings(warnings).build();
     }
 
-    private ValidationModel<AlunoModel> verificaDependencias(List<AlunoModel> alunos) {
+    private ValidationModel<AlunoModelCsv> verificaDependencias(List<AlunoModelCsv> alunos) {
         List<ErroValidation> erros = new ArrayList<>();
 
         int linha = 0;
 
-        for (AlunoModel aluno : alunos) {
+        for (AlunoModelCsv aluno : alunos) {
             linha++;
 
             List<DesafioTurma> responseDB = desafioTurmaRepository
@@ -137,22 +143,22 @@ public class AlunoService {
             aluno.setDesafiosTurma(responseDB);
         }
 
-        return ValidationModel.<AlunoModel>builder().errors(erros).objects(alunos).build();
+        return ValidationModel.<AlunoModelCsv>builder().errors(erros).objects(alunos).build();
     }
 
-    private ValidationModel<AlunoModel> checarDuplicatas(List<AlunoModel> models) {
+    private ValidationModel<AlunoModelCsv> checarDuplicatas(List<AlunoModelCsv> models) {
         List<ErroValidation> erroValidations = new ArrayList<>();
         List<ErroValidation> warnings = new ArrayList<>();
-        List<AlunoModel> unicosEmail = new ArrayList<>();
-        List<AlunoModel> unicosRa = new ArrayList<>();
-        List<AlunoModel> unicosCpf = new ArrayList<>();
+        List<AlunoModelCsv> unicosEmail = new ArrayList<>();
+        List<AlunoModelCsv> unicosRa = new ArrayList<>();
+        List<AlunoModelCsv> unicosCpf = new ArrayList<>();
 
         HashMap<String, Integer> uniqueEmail = new HashMap<String, Integer>();
         HashMap<String, Integer> uniqueRa = new HashMap<String, Integer>();
         HashMap<String, Integer> uniqueCpf = new HashMap<String, Integer>();
 
         int linha = 0;
-        for (AlunoModel aluno : models) {
+        for (AlunoModelCsv aluno : models) {
             linha++;
 
             if (!uniqueEmail.containsKey(aluno.getEmail())) {
@@ -191,87 +197,147 @@ public class AlunoService {
                 continue;
             }
 
-            try {
-                userService.buscarPorCpf(aluno.getCpf());
-                userService.buscarPorEmail(aluno.getEmail());
-                buscarPorRa(aluno.getRa());
+            if ((!userService.checarUniqueKey(aluno.getCpf(), aluno.getEmail()).isEmpty())||(!checarUniqueKeys(aluno.getRa()).isEmpty())) {
                 erroValidations.add(ErroValidation.builder().linha(linha).mensagem("Aluno já cadastrado").build());
-            } catch (Exception e) {
             }
         }
 
-        List<AlunoModel> unicos = unicosEmail;
+        List<AlunoModelCsv> unicos = unicosEmail;
         unicos.retainAll(unicosRa);
 
-        return ValidationModel.<AlunoModel>builder().errors(erroValidations).warnings(warnings).objects(unicos)
+        return ValidationModel.<AlunoModelCsv>builder().errors(erroValidations).warnings(warnings).objects(unicos)
                 .build();
     }
 
-    public List<Aluno> buscarPorTurma(Long id) {
-        return alunoRepository.findByDesafioTurmas_turma_id(id);
+    public List<AlunoDTO> buscarTodosDTO(){
+        List<Aluno> alunos = alunoRepository.findAll();
+        if (alunos.isEmpty()) {
+            throw new NoSuchElementException("Nenhum aluno encontrado");
+        }
+
+        List<AlunoDTO> response = new ArrayList<>();
+
+        for (Aluno aluno : alunos) {
+            response.add(montaAlunoDTO(aluno));
+        }
+
+        return response;
     }
 
-    public List<Aluno> listarAlunosTurma(Turma turma) {
-        List<Aluno> alunos = alunoRepository.findByDesafioTurmas_turma_id(turma.getId());
-        return alunos;
+    public AlunoDTO buscarPorRADTO(String ra){
+        var db = alunoRepository.findByra(ra.toLowerCase());
+        if (!db.isPresent()) {
+            throw new NoSuchElementException("Aluno não encontrado");
+        }
+
+        return montaAlunoDTO(db.get());
     }
 
+    public List<AlunoDTO> buscarPorTurmaDTO(String codTurma) {
+        List<Aluno> alunos = alunoRepository.findAllByDesafioTurmas_turma_codTurma(codTurma);
+        if (alunos.isEmpty()) {
+            throw new NoSuchElementException("Alunos não encontrados");
+        }
+
+        List<AlunoDTO> response = new ArrayList<>();
+
+        for (Aluno aluno : alunos) {
+            response.add(montaAlunoDTO(aluno));
+        }
+
+        return response;
+    }
+
+    private AlunoDTO montaAlunoDTO(Aluno aluno){
+        List<DesafioTurmaDTO> desafioTurmas = new ArrayList<>();
+
+        for (DesafioTurma desafioTurma : aluno.getDesafioTurmas()) {
+            desafioTurmas.add(
+                DesafioTurmaDTO.builder().id(desafioTurma.getId())
+                    .codTurma(desafioTurma.getTurma().getCodTurma())
+                    .nomeDesafio(desafioTurma.getDesafio().getNomeDesafio())
+                    .build()
+            );
+        }
+
+        return AlunoDTO.builder()
+            .id(aluno.getId())
+            .cpf(aluno.getUser().getCpf())
+            .name(aluno.getUser().getName())
+            .telefone(aluno.getUser().getTelefone())
+            .email(aluno.getUser().getEmail())
+            .level(aluno.getUser().getLevel().name())
+            .ra(aluno.getRa())
+            .desafioTurma(desafioTurmas)
+            .build();
+    }
+    
     public Aluno buscarPorRa(String ra) {
         var optional = alunoRepository.findByra(ra.toLowerCase());
 
         if (!optional.isPresent()) {
-            throw new NoSuchElementException();
+            throw new NoSuchElementException("Aluno não encontrado");
         }
 
         return optional.get();
     }
 
-    // Buscar todos os Alunos
-    public List<Aluno> buscarTodosAlunos() {
-        var alunos = alunoRepository.findAll();
-        if (alunos.isEmpty()) {
-            throw new NoSuchElementException("Não há alunos cadastrados!");
-        }
+    public List<Aluno> buscarPorTurma(Long id){
+        List<Aluno> alunos = alunoRepository.findByDesafioTurmas_turma_id(id);
         return alunos;
     }
 
-    // Editar Aluno
-    public GenericDTO editarAluno(AlunoModel alunoModel) {
-        try {
-            Aluno aluno = buscarPorRa(alunoModel.getRa());
-            User user = aluno.getUser();
-            user.setName(alunoModel.getName());
-            user.setTelefone(alunoModel.getTelefone());
-            user.setEmail(alunoModel.getEmail());
-            userRepository.save(user);
-            alunoRepository.save(aluno);
-            return GenericDTO.builder()
-                    .status(HttpStatus.OK)
-                    .mensagem("Aluno " + alunoModel.getRa() + " editado com sucesso!")
-                    .build();
-        } catch (NoSuchElementException e) {
-            return GenericDTO.builder()
-                    .status(HttpStatus.NOT_FOUND)
-                    .mensagem("Aluno não encontrado!")
-                    .build();
+    public Aluno buscarPorId(Long id){
+        var db = alunoRepository.findById(id);
+        if (!db.isPresent()) {
+            throw new NoSuchElementException("Aluno Não encontrado");
         }
+
+        return db.get();
     }
 
-    // Excluir Aluno
-    public GenericDTO excluirAluno(String ra) {
-        try {
-            Aluno aluno = buscarPorRa(ra);
-            User user = aluno.getUser();
-            alunoRepository.delete(aluno);
-            userRepository.delete(user);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Aluno " + ra + " excluído com sucesso!")
-                    .build();
-        } catch (NoSuchElementException e) {
-            return GenericDTO.builder()
-                    .status(HttpStatus.NOT_FOUND)
-                    .mensagem("Aluno " + ra + " não encontrado!")
-                    .build();
+    private List<Aluno> checarUniqueKeys(String ra){
+        List<Aluno> alunos = alunoRepository.findUniqueKeys(ra);
+        return alunos;
+    }
+
+    private List<Aluno> checarUniqueKeys(Aluno aluno){
+        List<Aluno> alunos = alunoRepository.findUniqueKeys(aluno);
+        return alunos;
+    }
+
+    public GenericDTO editar(AlunoModel model){
+        validaEntities.validaEntrada(model);
+        Aluno aluno = buscarPorId(model.getId());
+
+        boolean flag = (aluno.getUser().getEmail().equalsIgnoreCase(model.getEmail())) ? true : false;
+        flag = ((aluno.getUser().getCpf().equalsIgnoreCase(model.getCpf())) || (flag)) ? true : false;
+    
+        boolean flagAluno = aluno.getRa().equalsIgnoreCase(model.getRa());
+
+        aluno.setRa(model.getRa());
+        aluno.getUser().setCpf(model.getCpf());
+        aluno.getUser().setEmail(model.getEmail());
+        aluno.getUser().setPassword(passwordEncoder.encode(model.getPassword()));
+        aluno.getUser().setName(model.getName());
+        aluno.getUser().setTelefone(model.getTelefone());
+
+        if (((flag) && (userService.checaUniqueKey(aluno.getUser()).size() > 1)) ||
+                ((!flag) && (userService.checaUniqueKey(aluno.getUser()).size() > 0))) {
+            return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Aluno já existe").build();
         }
+
+        if ((!flagAluno) && (!checarUniqueKeys(aluno).isEmpty())) {
+            return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Aluno já existe").build();
+        }
+
+        alunoRepository.save(aluno);
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Aluno editado com sucesso").build();
+    }
+
+    public GenericDTO deletar(Long id){
+        Aluno aluno = buscarPorId(id);
+        alunoRepository.delete(aluno);
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Aluno Deletado com sucesso").build();
     }
 }

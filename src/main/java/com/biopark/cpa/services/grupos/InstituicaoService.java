@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +14,13 @@ import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
 import com.biopark.cpa.dto.cadastroCsv.ErroValidation;
 import com.biopark.cpa.dto.cadastroCsv.ValidationModel;
+import com.biopark.cpa.dto.grupos.InstituicaoDTO;
+import com.biopark.cpa.entities.grupos.Curso;
 import com.biopark.cpa.entities.grupos.Instituicao;
+import com.biopark.cpa.form.grupos.InstituicaoModel;
 import com.biopark.cpa.repository.grupo.InstituicaoRepository;
 import com.biopark.cpa.services.utils.CsvParserService;
+import com.biopark.cpa.services.utils.ValidaEntities;
 
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -26,6 +30,7 @@ import lombok.AllArgsConstructor;
 public class InstituicaoService {
     private final CsvParserService csvParserService;
     private final InstituicaoRepository instituicaoRepository;
+    private final ValidaEntities validaEntities;
 
     @Transactional
     public CadastroDTO cadastrarInstituicao(List<Instituicao> instituicoes, boolean update) {
@@ -79,7 +84,7 @@ public class InstituicaoService {
                 continue;
             }
 
-            if (instituicaoRepository.findByCodigoInstituicao(instituicao.getCodigoInstituicao()).isPresent()) {
+            if (checaUniqueKey(instituicao).size()>0) {
                 erroValidations
                         .add(ErroValidation.builder().linha(linha).mensagem("Instituição já cadastrada").build());
             }
@@ -89,58 +94,100 @@ public class InstituicaoService {
                 .build();
     }
 
-    public void upsert(List<Instituicao> iter){
+    public void upsert(List<Instituicao> iter) {
         for (Instituicao instituicao : iter) {
             instituicaoRepository.upsert(instituicao);
         }
     }
 
-    public Instituicao buscarPorCodigo(String codigo) {
+    public InstituicaoDTO buscarPorCodigoDTO(String codigo) {
         var optionalInstituicao = instituicaoRepository.findByCodigoInstituicao(codigo.toLowerCase().strip());
         if (!optionalInstituicao.isPresent()) {
             throw new NoSuchElementException("Instituição não encontrada!");
         }
-        return optionalInstituicao.get();
+
+        Instituicao instituicao = optionalInstituicao.get();
+
+        return montaResponse(instituicao);
     }
 
-    //TODO: verificar e refatorar as funções abaixo
-    public List<Instituicao> buscarTodasInstituicoes() {
-        var instituicoes = instituicaoRepository.findAll();
+    public List<InstituicaoDTO> buscarTodasInstituicoesDTO() {
+        List<Instituicao> instituicoes = instituicaoRepository.findAll();
         if (instituicoes.isEmpty()) {
             throw new NoSuchElementException("Não há instituições cadastradas!");
         }
-        return instituicoes;
+
+        List<InstituicaoDTO> response = new ArrayList<>();
+
+        for (Instituicao instituicao : instituicoes) {
+            response.add(montaResponse(instituicao));
+        }
+
+        return response;
     }
 
-    public GenericDTO editarInstituicao(Instituicao instituicaoRequest) {
-        try {
-            Instituicao instituicao = buscarPorCodigo(instituicaoRequest.getCodigoInstituicao());
-            instituicao.setNomeInstituicao(instituicaoRequest.getNomeInstituicao());
-            instituicao.setEmail(instituicaoRequest.getEmail());
-            instituicaoRepository.save(instituicao);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Instituicao " + instituicaoRequest.getCodigoInstituicao() + " editado com sucesso")
-                    .build();
-        } catch (Exception e) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
+    public Instituicao buscarPorCodigo(String codigo){
+        var optionalInstituicao = instituicaoRepository.findByCodigoInstituicao(codigo.toLowerCase().strip());
+        if (!optionalInstituicao.isPresent()) {
+            throw new NoSuchElementException("Instituição não encontrada!");
         }
+
+        Instituicao instituicao = optionalInstituicao.get();
+
+        return instituicao;
+    }
+
+    private List<Instituicao> checaUniqueKey(Instituicao instituicao){
+        return instituicaoRepository.findUniqueKey(instituicao);
+    }
+
+    private InstituicaoDTO montaResponse(Instituicao instituicao){
+        List<String> cods = instituicao.getCursos().stream().map(Curso::getCodCurso).collect(Collectors.toList());
+
+        InstituicaoDTO response = InstituicaoDTO.builder()
+            .id(instituicao.getId())
+            .codigoInstituicao(instituicao.getCodigoInstituicao())
+            .nomeInstituicao(instituicao.getNomeInstituicao())
+            .email(instituicao.getEmail())
+            .cnpj(instituicao.getCnpj())
+            .cursosCod(cods)
+            .build();
+
+        return response;
+    }
+
+    public GenericDTO editarInstituicao(InstituicaoModel instituicaoRequest) {
+        validaEntities.validaEntrada(instituicaoRequest);
+        var db =  instituicaoRepository.findById(instituicaoRequest.getId());
+        if (!db.isPresent()) {
+            throw new NoSuchElementException("instituicao não encontrada");            
+        }
+
+        Instituicao instituicao = db.get();
+
+        boolean flag = (!instituicao.getCodigoInstituicao().equalsIgnoreCase(instituicaoRequest.getCodigoInstituicao())) ? true : false;
+
+        instituicao.setNomeInstituicao(instituicaoRequest.getNomeInstituicao());
+        instituicao.setCnpj(instituicaoRequest.getCnpj());
+        instituicao.setEmail(instituicaoRequest.getEmail());
+        instituicao.setCodigoInstituicao(instituicaoRequest.getCodigoInstituicao());
+
+        if (flag) {
+            if (checaUniqueKey(instituicao).size() > 0) {
+                return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("O código de instituição já se encontra no banco de dados").build();
+            }
+        }
+        instituicaoRepository.save(instituicao);
+
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Instituição editada com sucesso").build();
     }
 
     public GenericDTO excluirInstituicao(Long id) {
-        try {
-            var instituicaoDB = instituicaoRepository.findById(id);
-            if (!instituicaoDB.isPresent()) {
-                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("instituição não encontrada").build();
-            }
-            Instituicao instituicao = instituicaoDB.get();
-            instituicaoRepository.delete(instituicao);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Instituicão " + instituicao.getNomeInstituicao() + " excluída com sucesso")
-                    .build();
-        } catch (EmptyResultDataAccessException e) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
-                    .mensagem("Instituicão " + id + " não encontrada")
-                    .build();
+        if (!instituicaoRepository.findById(id).isPresent()) {
+            throw new NoSuchElementException("Instituicao não encontrada");
         }
+
+        instituicaoRepository.deleteById(id);
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Instituição deletada com sucesso").build();
     }
 }

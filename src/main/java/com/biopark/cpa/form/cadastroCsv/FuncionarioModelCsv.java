@@ -7,12 +7,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Builder
 @AllArgsConstructor
-public class FuncionarioModel extends UserModel{
+@NoArgsConstructor
+public class FuncionarioModelCsv extends UserModel{
     @CsvBindByName(column = "cracha")
     @NotBlank(message = "cracha não deve ser nulo")
     private String cracha;

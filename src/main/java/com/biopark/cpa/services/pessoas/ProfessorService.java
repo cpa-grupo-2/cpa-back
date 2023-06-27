@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +16,7 @@ import com.biopark.cpa.entities.pessoas.Professor;
 import com.biopark.cpa.entities.user.User;
 import com.biopark.cpa.entities.user.enums.Level;
 import com.biopark.cpa.entities.user.enums.Role;
-import com.biopark.cpa.form.cadastroCsv.ProfessorModel;
+import com.biopark.cpa.form.cadastroCsv.ProfessorModelCsv;
 import com.biopark.cpa.repository.pessoas.ProfessorRepository;
 import com.biopark.cpa.repository.pessoas.UserRepository;
 import com.biopark.cpa.services.security.GeneratePassword;
@@ -37,7 +36,7 @@ public class ProfessorService {
     private final GeneratePassword generatePassword;
 
     @Transactional
-    public CadastroDTO cadastrarProfessor(List<ProfessorModel> professoresModel, boolean update) {
+    public CadastroDTO cadastrarProfessor(List<ProfessorModelCsv> professoresModel, boolean update) {
         List<ErroValidation> errors = csvParserService.validaEntrada(professoresModel);
         List<ErroValidation> warnings = new ArrayList<>();
 
@@ -46,7 +45,7 @@ public class ProfessorService {
         }
 
         if (!update) {
-            ValidationModel<ProfessorModel> model = checarDuplicatas(professoresModel);
+            ValidationModel<ProfessorModelCsv> model = checarDuplicatas(professoresModel);
             List<ErroValidation> duplicatas = model.getErrors();
             warnings = model.getWarnings();
             professoresModel = model.getObjects();
@@ -58,7 +57,7 @@ public class ProfessorService {
             List<User> users = new ArrayList<>();
             List<Professor> professores = new ArrayList<>();
 
-            for (ProfessorModel professorModel : professoresModel) {
+            for (ProfessorModelCsv professorModel : professoresModel) {
                 User user = User.builder()
                         .cpf(professorModel.getCpf())
                         .name(professorModel.getName())
@@ -85,7 +84,7 @@ public class ProfessorService {
             return CadastroDTO.builder().status(HttpStatus.OK).erros(errors).warnings(warnings).build();
         }
 
-        for (ProfessorModel professorModel : professoresModel) {
+        for (ProfessorModelCsv professorModel : professoresModel) {
             User user = User.builder()
                     .cpf(professorModel.getCpf())
                     .email(professorModel.getEmail())
@@ -110,19 +109,19 @@ public class ProfessorService {
         return CadastroDTO.builder().status(HttpStatus.OK).erros(errors).warnings(warnings).build();
     }
 
-    private ValidationModel<ProfessorModel> checarDuplicatas(List<ProfessorModel> professores) {
+    private ValidationModel<ProfessorModelCsv> checarDuplicatas(List<ProfessorModelCsv> professores) {
         List<ErroValidation> erroValidations = new ArrayList<>();
         List<ErroValidation> warnings = new ArrayList<>();
-        List<ProfessorModel> unicosEmail = new ArrayList<>();
-        List<ProfessorModel> unicosCracha = new ArrayList<>();
-        List<ProfessorModel> unicosCpf = new ArrayList<>();
+        List<ProfessorModelCsv> unicosEmail = new ArrayList<>();
+        List<ProfessorModelCsv> unicosCracha = new ArrayList<>();
+        List<ProfessorModelCsv> unicosCpf = new ArrayList<>();
 
         HashMap<String, Integer> uniqueEmail = new HashMap<String, Integer>();
         HashMap<String, Integer> uniqueCracha = new HashMap<String, Integer>();
         HashMap<String, Integer> uniqueCpf = new HashMap<String, Integer>();
 
         int linha = 0;
-        for (ProfessorModel professor : professores) {
+        for (ProfessorModelCsv professor : professores) {
             linha++;
 
             if (!uniqueEmail.containsKey(professor.getEmail())) {
@@ -170,12 +169,20 @@ public class ProfessorService {
             }
         }
 
-        List<ProfessorModel> unicos = unicosEmail;
+        List<ProfessorModelCsv> unicos = unicosEmail;
         unicos.retainAll(unicosCracha);
 
-        return ValidationModel.<ProfessorModel>builder().errors(erroValidations).warnings(warnings).objects(unicos)
+        return ValidationModel.<ProfessorModelCsv>builder().errors(erroValidations).warnings(warnings).objects(unicos)
                 .build();
     }
+
+    public GenericDTO excluirProfessor(Long id) {
+        Professor professor = buscarPorId(id);
+        professorRepository.delete(professor);
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Professor deletado com sucesso").build();
+    }
+
+
 
     //Filtrar por crachá
     public Professor buscarPorCracha(String cracha) {
@@ -187,15 +194,15 @@ public class ProfessorService {
         return optional.get();
     }
     
-    // Filtrar Professor por id
+    
     public Professor buscarPorId(Long id) {
         var optionalProfessor = professorRepository.findById(id);
 
         if (optionalProfessor.isPresent()) {
-            return optionalProfessor.get();
-        } else {
             throw new NoSuchElementException("Professor não encontrado!");
         }
+
+        return optionalProfessor.get();
     }
 
     // Filtrar todos os professor
@@ -207,38 +214,5 @@ public class ProfessorService {
         return professor;
     }
 
-    // Editar Professor por crachá
-    public GenericDTO editarProfessor(Professor professorRequest) {
-        try {
-            Professor professor = buscarPorCracha(professorRequest.getCracha());
-            professor.getUser().setName(professorRequest.getUser().getName());
-            professor.getUser().setTelefone(professorRequest.getUser().getTelefone());
-            professor.getUser().setEmail(professorRequest.getUser().getEmail());
-            professorRepository.save(professor);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Professor " + professorRequest.getCracha() + " editado com sucesso")
-                    .build();
-        } catch (Exception e) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem(e.getMessage()).build();
-        }
-    }
 
-    // Excluir Professor
-    public GenericDTO excluirProfessor(Long id) {
-        try {
-            var professorDB = professorRepository.findById(id);
-            if (!professorDB.isPresent()) {
-                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("professor não encontrada").build();
-            }
-            Professor professor = professorDB.get();
-            professorRepository.delete(professor);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Professor " + professor.getId() + " excluído com sucesso")
-                    .build();
-        } catch (EmptyResultDataAccessException e) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
-                    .mensagem("Professor " + id + " não encontrado")
-                    .build();
-        }
-    }
 }
