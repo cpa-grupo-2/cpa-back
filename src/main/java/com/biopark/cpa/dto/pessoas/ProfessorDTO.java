@@ -11,6 +11,7 @@ public class ProfessorDTO {
     private long id;
     private String cpf;
     private String name;
+    private String cracha;
     private String telefone;
     private String email;
     private String level;
