@@ -176,6 +176,11 @@ public class ProfessorService {
                 .build();
     }
 
+    public GenericDTO excluirProfessor(Long id) {
+        Professor professor = buscarPorId(id);
+        professorRepository.delete(professor);
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Professor deletado com sucesso").build();
+    }
 
 
 
@@ -209,9 +214,5 @@ public class ProfessorService {
         return professor;
     }
 
-    public GenericDTO excluirProfessor(Long id) {
-        Professor professor = buscarPorId(id);
-        professorRepository.delete(professor);
-        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Professor deletado com sucesso").build();
-    }
+
 }

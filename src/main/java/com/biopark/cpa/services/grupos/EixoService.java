@@ -72,7 +72,7 @@ public class EixoService {
         return montaDTO(op.get());
     }
 
-    private Eixo buscarEixoId(Long id){
+    public Eixo buscarEixoId(Long id){
         var op = eixoRepository.findById(id);
         if (!op.isPresent()) {
             throw new NoSuchElementException("Eixo não encontrado");

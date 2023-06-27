@@ -1,131 +1,141 @@
 package com.biopark.cpa.services.grupos;
 
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import com.biopark.cpa.dto.GenericDTO;
-import com.biopark.cpa.entities.grupos.Questao;
-import com.biopark.cpa.entities.grupos.enums.TipoQuestao;
-import com.biopark.cpa.form.grupos.QuestaoModel;
-import com.biopark.cpa.repository.grupo.EixoRepository;
-import com.biopark.cpa.repository.grupo.QuestaoRepository;
-
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
-import lombok.RequiredArgsConstructor;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+
+import com.biopark.cpa.dto.GenericDTO;
+import com.biopark.cpa.dto.grupos.QuestaoDTO;
+import com.biopark.cpa.entities.grupos.Eixo;
+import com.biopark.cpa.entities.grupos.Questao;
+import com.biopark.cpa.entities.grupos.enums.TipoQuestao;
+import com.biopark.cpa.form.grupos.QuestaoEditModel;
+import com.biopark.cpa.form.grupos.QuestaoModel;
+import com.biopark.cpa.repository.grupo.QuestaoRepository;
+import com.biopark.cpa.services.utils.ValidaEntities;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class QuestaoService {
     private final QuestaoRepository questaoRepository;
-    private final Validator validator;
-    private final EixoRepository eixoRepository;
+    private final EixoService eixoService;
+    private final ValidaEntities validaEntities;
 
-    // Cadastrar Questão
-    public GenericDTO cadastrarQuestoes(QuestaoModel questao) {
-        Set<ConstraintViolation<QuestaoModel>> violacoes = validator.validate(questao);
+    public GenericDTO cadastrarQuestoes(QuestaoModel model) {
+        validaEntities.validaEntrada(model);
+        Eixo eixo = eixoService.buscarEixoId(model.getEixoId());
 
-        if (!violacoes.isEmpty()) {
-            String mensagem = "";
-            for (ConstraintViolation<QuestaoModel> violacao : violacoes) {
-                mensagem += violacao.getMessage() + "; ";
-            }
-            return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem(mensagem).build();
-        }
-
-        var eixo = eixoRepository.findById(questao.getEixoId());
-
-        if(!eixo.isPresent()) {
-           return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem("Eixo informado não encontrado!").build();
-        }
-
-        if (questaoRepository.findByDescricao(questao.getDescricao()).isPresent()) {
+        if (!uniqueKeys(model.getDescricao()).isEmpty()) {
             return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Questão já cadastrada").build();
         }
 
         TipoQuestao tipo;
 
         try {
-            tipo = TipoQuestao.valueOf(questao.getTipo().toUpperCase());
+            tipo = TipoQuestao.valueOf(model.getTipo().toUpperCase());
         } catch (IllegalArgumentException e) {
             return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem("Tipo de questão inválido").build();
         }
 
-        Questao novaQuestao = Questao.builder()
-                .descricao(questao.getDescricao())
+        Questao questao = Questao.builder()
+                .descricao(model.getDescricao())
                 .tipo(tipo)
-                .eixo(eixo.get())
+                .eixo(eixo)
                 .build();
 
-        questaoRepository.save(novaQuestao);
+        questaoRepository.save(questao);
         return GenericDTO.builder().status(HttpStatus.OK).mensagem("Questão cadastrada com sucesso.").build();
     }
 
-    // Filtrar as questões por descricao
-    public Questao buscarQuestaoPorID(Long id) {
-        var optionalQuestoes = questaoRepository.findById(id);
-        if (optionalQuestoes.isPresent()) {
-            return optionalQuestoes.get();
-        } else {
-            throw new NoSuchElementException("Questão não encontrada!");
-        }
+    private List<Questao> uniqueKeys(String descricao){
+        return questaoRepository.findByUniqueKey(descricao.toLowerCase());
     }
 
-    // Filtrar todas as questões
-    public List<Questao> buscarTodasQuestoes() {
-        var questoes = questaoRepository.findAll();
+    private QuestaoDTO montaDTO(Questao questao){
+        return QuestaoDTO.builder()
+            .id(questao.getId())
+            .descricao(questao.getDescricao())
+            .eixo(questao.getEixo().getNomeEixo())
+            .tipo(questao.getTipo().name())
+            .build();
+    }
+
+    public List<QuestaoDTO> buscarTodasQuestoesDTO(){
+        List<Questao> questoes = questaoRepository.findAll();
         if (questoes.isEmpty()) {
-            throw new NoSuchElementException("Não há questões cadastradas!");
+            throw new NoSuchElementException("Questões não encontradas");
         }
-        return questoes;
+
+        List<QuestaoDTO> response = new ArrayList<>();
+        for (Questao questao : questoes) {
+            response.add(montaDTO(questao));
+        }
+
+        return response;
     }
 
-    // Editar Questão
-    public GenericDTO editarQuestao(QuestaoModel questaoRequest) {
-        if (questaoRequest.getId() == null) {
-            throw new IllegalArgumentException();
+    public QuestaoDTO buscarIdDTO(Long id){
+        var db = questaoRepository.findById(id);
+        if (!db.isPresent()) {
+            throw new NoSuchElementException("Questão não encontrada");
         }
 
+        QuestaoDTO response = montaDTO(db.get());
+
+        return response;
+    }
+
+    private Questao buscarId(Long id){
+        var db = questaoRepository.findById(id);
+        if (!db.isPresent()) {
+            throw new NoSuchElementException("Questão não encontrada");
+        }
+
+        return db.get();
+    }
+
+    public GenericDTO editarQuestao(QuestaoEditModel model){
+        validaEntities.validaEntrada(model);
+        var db =  questaoRepository.findById(model.getId());
+        if (!db.isPresent()) {
+            throw new NoSuchElementException("Questão não encontrada");            
+        }
+
+        Questao questao = db.get();
+
+        boolean flag = (questao.getDescricao().equalsIgnoreCase(model.getDescricao())) ? true : false;
+
+        Eixo eixo = eixoService.buscarEixoId(model.getEixoId());
         TipoQuestao tipo;
+        
         try {
-            tipo = TipoQuestao.valueOf(questaoRequest.getTipo().toUpperCase());
+            tipo = TipoQuestao.valueOf(model.getTipo().toUpperCase());
         } catch (IllegalArgumentException e) {
             return GenericDTO.builder().status(HttpStatus.BAD_REQUEST).mensagem("Tipo de questão inválido").build();
         }
 
-        Questao questao = buscarQuestaoPorID(questaoRequest.getId());
+        questao.setDescricao(null);
+        questao.setEixo(eixo);
         questao.setTipo(tipo);
-        questao.setDescricao(questaoRequest.getDescricao());
-        
 
+        if (!flag) {
+            if (!uniqueKeys(questao.getDescricao()).isEmpty()) {
+                return GenericDTO.builder().status(HttpStatus.CONFLICT).mensagem("Questão já cadastrada").build();
+            }
+        }
 
         questaoRepository.save(questao);
-        return GenericDTO.builder().status(HttpStatus.OK)
-                .mensagem("Questao " + questaoRequest.getDescricao() + " editada com sucesso")
-                .build();
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Questão editada com sucesso").build();
     }
 
-    // Excluir Questão
-    public GenericDTO excluirQuestao(Long id) {
-        try {
-            var questaoDB = questaoRepository.findById(id);
-            if (!questaoDB.isPresent()) {
-                return GenericDTO.builder().status(HttpStatus.NOT_FOUND).mensagem("Questão não encontrada").build();
-            }
-            Questao questao = questaoDB.get();
-            questaoRepository.delete(questao);
-            return GenericDTO.builder().status(HttpStatus.OK)
-                    .mensagem("Questao " + questao.getDescricao() + " excluída com sucesso")
-                    .build();
-        } catch (EmptyResultDataAccessException e) {
-            return GenericDTO.builder().status(HttpStatus.NOT_FOUND)
-                    .mensagem("Questao " + id + " não encontrada")
-                    .build();
-        }
+    public GenericDTO excluirQuestao(Long id){
+        Questao questao = buscarId(id);
+        questaoRepository.delete(questao);
+        return GenericDTO.builder().status(HttpStatus.OK).mensagem("Questão deletada com sucesso").build();
     }
-
 }
