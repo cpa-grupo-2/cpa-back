@@ -3,6 +3,8 @@ package com.biopark.cpa.entities.grupos;
 import java.util.List;
 
 import com.biopark.cpa.entities.pessoas.Aluno;
+import com.biopark.cpa.entities.pessoas.Professor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -37,6 +39,7 @@ public class DesafioTurma {
     @ManyToOne
     private Turma turma;
 
+    @JsonIgnore
     @ManyToMany(cascade = {CascadeType.MERGE})
     @JoinTable(
         name = "aluno_desafio_turma",
@@ -44,4 +47,13 @@ public class DesafioTurma {
         inverseJoinColumns = @JoinColumn(name = "aluno_id")
     )
     private List<Aluno> alunos;
+
+    @JsonIgnore
+    @ManyToMany(cascade = {CascadeType.MERGE})
+    @JoinTable(
+        name = "professor_desafio_turma",
+        joinColumns = @JoinColumn(name = "desafio_turma_id"),
+        inverseJoinColumns = @JoinColumn(name = "professor_id")
+    )
+    private List<Professor> professores;
 }

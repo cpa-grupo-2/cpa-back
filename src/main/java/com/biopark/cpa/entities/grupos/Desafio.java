@@ -9,6 +9,7 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.opencsv.bean.CsvBindByName;
 
 import jakarta.persistence.Column;
@@ -44,6 +45,7 @@ public class Desafio {
     @ColumnTransformer(write = "LOWER(?)")
     private String nomeDesafio;
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "desafios")
     private List<Turma> turmas;
 

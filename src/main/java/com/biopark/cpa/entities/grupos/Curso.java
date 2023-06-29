@@ -10,6 +10,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
 
 import com.biopark.cpa.entities.pessoas.Professor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.opencsv.bean.CsvBindByName;
 
 import jakarta.persistence.Column;
@@ -54,6 +55,7 @@ public class Curso {
     @ColumnTransformer(write = "LOWER(?)")
     private String codCurso;
     
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "instituicao_id")
     private Instituicao instituicao;
