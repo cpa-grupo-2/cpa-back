@@ -2,13 +2,13 @@ package com.biopark.cpa.controllers.grupos;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,8 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.biopark.cpa.dto.GenericDTO;
 import com.biopark.cpa.dto.cadastroCsv.CadastroDTO;
+import com.biopark.cpa.dto.grupos.DesafioDTO;
 import com.biopark.cpa.entities.grupos.Desafio;
-import com.biopark.cpa.repository.grupo.DesafioRepository;
+import com.biopark.cpa.form.grupos.DesafioModel;
 import com.biopark.cpa.services.grupos.DesafioService;
 import com.biopark.cpa.services.utils.CsvParserService;
 
@@ -33,9 +34,7 @@ import lombok.RequiredArgsConstructor;
 public class DesafioController {
     private final CsvParserService csvParserService;
     private final DesafioService desafioService;
-    private final DesafioRepository desafioRepository;
 
-    //Cadastrar um Desafio
     @PostMapping
     public ResponseEntity<CadastroDTO> cadastrarDesafio(@RequestParam("file") MultipartFile file) throws IOException {
         List<Desafio> desafios = csvParserService.parseCsv(file, Desafio.class);
@@ -43,39 +42,26 @@ public class DesafioController {
         return ResponseEntity.status(cadastroDTO.getStatus()).body(cadastroDTO);
     }
 
-    //Buscar apenas um desafio apssando o nomeDesafio como paramêtro.
     @GetMapping
-    public ResponseEntity<Optional<Desafio>> buscarNomeDesafio(@RequestParam(name = "nomeDesafio") String nomeDesafio) {
-        nomeDesafio = nomeDesafio.toLowerCase();
-        var desafio = desafioRepository.findByNomeDesafio(nomeDesafio);
-        if (desafio == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(desafio);
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(desafio);
+    public ResponseEntity<List<DesafioDTO>> buscaTodosDesafios(){
+        List<DesafioDTO> desafios = desafioService.buscarTodosDTO();
+        return ResponseEntity.status(HttpStatus.OK).body(desafios);
+    } 
+
+    @GetMapping("/pesquisa")
+    public ResponseEntity<List<DesafioDTO>> buscarNomeDesafio(@RequestParam(name = "termo") String nomeParcialDesafio) {
+        List<DesafioDTO> desafios = desafioService.buscaNomeParcial(nomeParcialDesafio);
+        return ResponseEntity.status(HttpStatus.OK).body(desafios);
     }
 
-    //Buscar varios desafios passando o caminho api/desafio/desafios
-    @GetMapping("/desafios")
-    public ResponseEntity<List<Desafio>> buscarTodosDesafios() {
-        List<Desafio> desafios = desafioRepository.findAll();
-        if (desafios.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok(desafios);
-    }
-
-    //Editar Desafio
     @PutMapping
-    public ResponseEntity<GenericDTO> editarDesafio(@RequestBody Desafio desafio) {
+    public ResponseEntity<GenericDTO> editarDesafio(@RequestBody DesafioModel desafio) {
         GenericDTO response = desafioService.editarDesafio(desafio);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-
-    //Deletar um Desafio
-    @DeleteMapping
-    public ResponseEntity<GenericDTO> excluirDesafio(@RequestParam("id") int idRequest) {
-        Long id = Long.valueOf(idRequest);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<GenericDTO> excluirDesafio(@PathVariable("id") Long id) {
         GenericDTO response = desafioService.excluirDesafio(id);
         return ResponseEntity.status(response.getStatus()).body(response);
     }

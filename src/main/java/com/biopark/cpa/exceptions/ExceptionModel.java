@@ -13,5 +13,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ExceptionModel {
     private HttpStatus status;
-    private String message;
+    private String mensagem;
 }

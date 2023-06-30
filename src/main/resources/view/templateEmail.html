@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinição de senha</title>
+
+    <style>
+        table,
+        td,
+        div,
+        h1,
+        p {
+            font-weight: 500;
+            font-family: Arial, sans-serif;
+        }
+
+        .button {
+            margin: 50px 0 12px 200px;
+            height: 20px;
+            font-size: 14px;
+            border-radius: 4px;
+            padding: 10px 10px;
+            font-weight: 600;
+            text-decoration: none;
+            color: white !important;
+            background: #304358 !important;
+        }
+
+        .button:hover{
+            height: 20px;
+            font-size: 16px;
+            margin: 50px 0 12px 185px;
+            transition: 180ms ease-in-out;
+        }
+    </style>
+</head>
+
+<body style="margin:0;padding:0;">
+    <table role="presentation"
+        style="width:100%;border-collapse:collapse;border:0;border-spacing:0;background:#ffffff;">
+        <tr>
+            <td align="center" style="padding:0;">
+                <table role="presentation"
+                    style="width:600px;border-collapse:collapse;border:1px solid #cccccc;border-spacing:0;text-align:left;">
+                    <tr style="border-collapse:collapse;border:1px solid #cccccc;border-spacing:0;">
+                        <td align="left" style="padding:10px 25px;background:#304358; display: flex; align-items: center;">
+                            <span style="font-weight: bold; padding-top: 10px; color: white;"> Redefinição de senha</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:36px 30px 42px 30px;">
+                            <table role="presentation"
+                                style="width:100%;border-collapse:collapse;border:0;border-spacing:0;">
+                                <tr>
+                                    <td style="padding:0 0 36px 0;color:#153643;">
+                                        <p style="font-weight:bold;margin:0 0 20px 0;font-family:Arial,sans-serif;">
+                                            Olá ${name}, recebemos uma solicitação de alteração de senha.</h1>
+                                        <p
+                                            style="margin:0 0 12px 0;font-size:14px;line-height:24px;font-family:Arial,sans-serif;">
+                                            Para seguir com sua alteração basta clicar no botão abaixo, lembre que o link ficará válido por 30 minutos para sua segurança.
+                                        </p>
+                                        <p
+                                            style="margin:0 0 12px 0;font-size:14px;line-height:24px;font-family:Arial,sans-serif;">
+                                            Caso não tenha solicitado alteração, ignore este email.
+                                        </p>
+
+                                        <a href="${linkRedefinirSenha}", class="button">Redefinir a senha</a>
+
+                                        <p style="margin:50px 0 12px 0;font-size:14px;font-family:Arial,sans-serif;">
+                                            Atenciosamente, </p>
+                                        <p style="margin:0 0 12px 0;font-size:14px;font-family:Arial,sans-serif;">
+                                            Equipe CPA</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

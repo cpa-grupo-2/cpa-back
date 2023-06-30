@@ -2,6 +2,7 @@ package com.biopark.cpa.services.utils;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -27,7 +28,7 @@ public class CsvParserService {
         HeaderColumnNameMappingStrategy<T> strategy = new HeaderColumnNameMappingStrategy<T>();
         strategy.setType(classe);
 
-        CsvToBean<T> csvToBean = new CsvToBeanBuilder<T>(new InputStreamReader(file.getInputStream()))
+        CsvToBean<T> csvToBean = new CsvToBeanBuilder<T>(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8.newDecoder()))
             .withType(classe)
             .withSeparator(';')
             .withMappingStrategy(strategy)

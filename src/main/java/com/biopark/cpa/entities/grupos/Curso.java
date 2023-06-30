@@ -1,9 +1,16 @@
 package com.biopark.cpa.entities.grupos;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.hibernate.annotations.ColumnTransformer;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Where;
 
+import com.biopark.cpa.entities.pessoas.Professor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.opencsv.bean.CsvBindByName;
 
 import jakarta.persistence.Column;
@@ -28,16 +35,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "curso")
+@SQLDelete(sql = "UPDATE curso SET deleted = true WHERE id = ?")
+@Where(clause = "deleted = false")
 public class Curso {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "codigo_curso", nullable = false, unique = true)
-    @NotBlank(message = "O campo codigo_curso não pode ser nulo")
-    @CsvBindByName(column = "codigo_curso")
-    private String codigoCurso;
     
     @Column(name = "nome_curso", nullable = false, unique = true)
     @NotBlank(message = "O campo nome não deve ser nulo")
@@ -51,6 +55,7 @@ public class Curso {
     @ColumnTransformer(write = "LOWER(?)")
     private String codCurso;
     
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "instituicao_id")
     private Instituicao instituicao;
@@ -58,8 +63,28 @@ public class Curso {
     @OneToMany(mappedBy = "curso")
     private List<Turma> turmas;
 
+    @ManyToOne
+    @JoinColumn(name = "coordenador_id")
+    private Professor professor;
+
     @Transient
     @NotBlank(message = "O campo cod insituicao não deve ser nulo")
     @CsvBindByName(column = "codigo instituicao")
     private String codInstituicao;
+
+    @Transient
+    @NotBlank(message = "O campo cracha coordenador não deve ser nulo")
+    @CsvBindByName(column = "coordenador")
+    private String crachaCoordenador;
+
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Builder.Default
+    private boolean deleted = false;
 }

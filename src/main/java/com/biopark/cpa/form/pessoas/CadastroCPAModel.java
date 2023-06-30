@@ -1,5 +1,8 @@
 package com.biopark.cpa.form.pessoas;
 
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -12,14 +15,19 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CadastroCPA {
+public class CadastroCPAModel {
+   
+   @Id
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
+   private Long id;
+
    @NotBlank(message = "cpf é um campo obrigatório")
    @Pattern(regexp = "(\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2})", message = "cpf em formato inválido")
    private String cpf;
 
    @NotBlank(message = "nome é um campo obrigatório")
    private String name;
-   
+
    @NotBlank(message = "telefone é um campo obrigatório")
    private String telefone;
 
