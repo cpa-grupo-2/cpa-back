@@ -33,13 +33,7 @@ jobs:
         run: mvn --batch-mode -DskipTests -Pdev package
 
       - name: test
-        run: mvn test -DDB_HOST=jdbc:mysql://localhost:3306/${{ vars.MYSQL_DATABASE }} 
-          -DDB_USER=${{ vars.MYSQL_USER }} 
-          -DDB_PASS=${{ vars.MYSQL_PASSWORD }} 
-          -DJWT_KEY=${{ vars.JWT_KEY }} 
-          -DCORS_FRONT=${{ vars.CORS_FRONT }}
-          -DEMAIL_SENDER=${{ vars.EMAIL_SENDER }}
-          -DPASSWORD_EMAIL=${{ vars.PASSWORD_EMAIL }}
+        run: mvn test -DDB_HOST=jdbc:mysql://localhost:3306/${{ vars.MYSQL_DATABASE }} -DDB_USER=${{ vars.MYSQL_USER }} -DDB_PASS=${{ vars.MYSQL_PASSWORD }} -DJWT_KEY=${{ vars.JWT_KEY }} -DCORS_FRONT=${{ vars.CORS_FRONT }} -DEMAIL_SENDER=${{ vars.EMAIL_SENDER }} -DPASSWORD_EMAIL=${{ vars.PASSWORD_EMAIL }}
 
       - name: Down Mysql for tests
         run: docker-compose down mysql_db
