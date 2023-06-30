@@ -44,7 +44,7 @@ jobs:
           -DADMIN_ACCOUNT=${{ vars.ADMIN_ACCOUNT }}
           -DADMIN_PASSWORD=${{ vars.ADMIN_PASSWORD }}
           -DUSER_ACCOUNT=${{ vars.USER_ACCOUNT }}
-          -DUSER_ACCOUNT=${{ vars.USER_PASSWORD }}
+          -DUSER_PASSWORD=${{ vars.USER_PASSWORD }}
 
       - name: Down Mysql for tests
         run: docker-compose down mysql_db
